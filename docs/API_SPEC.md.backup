@@ -1,0 +1,1136 @@
+# 🔌 API Спецификация
+
+## Обзор
+
+Проект использует **tRPC** для type-safe API. Все эндпоинты автоматически типизированы между клиентом и сервером.
+
+**Базовый URL**: `/api/trpc`
+
+---
+
+## 🔐 Аутентификация
+
+### NextAuth.js сессии
+
+```typescript
+// Получение текущего пользователя
+const { data: session } = useSession();
+
+// session.user содержит:
+{
+  id: string;
+  email: string;
+  name: string;
+  role: 'ADMIN' | 'MANAGER' | 'CUSTOMER';
+}
+```
+
+### Защищённые эндпоинты
+
+Требуют авторизации через NextAuth.js middleware:
+- `/api/trpc/orders.*` — управление заказами
+- `/api/trpc/admin.*` — админские операции
+- `/api/trpc/user.*` — данные пользователя
+
+---
+
+## 📦 Products API
+
+### **products.list** — Список товаров
+
+**Запрос:**
+```typescript
+{
+  categoryId?: string;
+  flowerTypes?: string[]; // Фильтр по типу цветов
+  colors?: string[]; // Фильтр по цветам
+  occasions?: string[]; // Фильтр по поводу
+  priceFrom?: number;
+  priceTo?: number;
+  search?: string; // Поиск по названию
+  sortBy?: 'popularity' | 'price_asc' | 'price_desc' | 'newest';
+  page?: number; // default: 1
+  limit?: number; // default: 24
+}
+```
+
+**Ответ:**
+```typescript
+{
+  items: Product[];
+  total: number;
+  page: number;
+  pages: number;
+}
+
+type Product = {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  price: number;
+  compareAtPrice?: number; // Старая цена для скидки
+  images: string[];
+  category: { id: string; name: string };
+  stock: number;
+  isFeatured: boolean;
+  isNew: boolean;
+  rating: number; // Средний рейтинг
+  reviewCount: number;
+};
+```
+
+**Пример использования:**
+```typescript
+const { data } = trpc.products.list.useQuery({
+  categoryId: 'cat_bouquets',
+  priceFrom: 1000,
+  priceTo: 5000,
+  sortBy: 'popularity',
+  page: 1,
+  limit: 24,
+});
+```
+
+---
+
+### **products.getById** — Получить товар
+
+**Запрос:**
+```typescript
+{
+  id: string;
+}
+```
+
+**Ответ:**
+```typescript
+{
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  price: number;
+  compareAtPrice?: number;
+  images: string[];
+  category: Category;
+
+  // Характеристики
+  stock: number;
+  sku: string;
+  weight: number;
+  height: number;
+
+  // Атрибуты
+  flowerTypes: string[];
+  colors: string[];
+  occasions: string[];
+
+  // SEO
+  metaTitle: string;
+  metaDescription: string;
+
+  // Состояние
+  isFeatured: boolean;
+  isNew: boolean;
+
+  // Метрики
+  rating: number;
+  reviewCount: number;
+  viewsCount: number;
+
+  // Похожие товары
+  relatedProducts: Product[];
+}
+```
+
+---
+
+### **products.incrementViews** — Увеличить счётчик просмотров
+
+**Запрос:**
+```typescript
+{
+  productId: string;
+}
+```
+
+**Ответ:**
+```typescript
+{
+  success: boolean;
+}
+```
+
+---
+
+## 🛒 Cart API
+
+### **cart.add** — Добавить в корзину
+
+**Запрос:**
+```typescript
+{
+  productId: string;
+  quantity: number;
+}
+```
+
+**Ответ:**
+```typescript
+{
+  cart: Cart;
+}
+
+type Cart = {
+  items: CartItem[];
+  subtotal: number;
+  itemsCount: number;
+};
+
+type CartItem = {
+  id: string;
+  product: Product;
+  quantity: number;
+  subtotal: number; // product.price * quantity
+};
+```
+
+---
+
+### **cart.update** — Обновить количество
+
+**Запрос:**
+```typescript
+{
+  cartItemId: string;
+  quantity: number; // 0 = удалить из корзины
+}
+```
+
+**Ответ:**
+```typescript
+{
+  cart: Cart;
+}
+```
+
+---
+
+### **cart.get** — Получить корзину
+
+**Запрос:** (без параметров)
+
+**Ответ:**
+```typescript
+{
+  cart: Cart;
+}
+```
+
+---
+
+### **cart.clear** — Очистить корзину
+
+**Запрос:** (без параметров)
+
+**Ответ:**
+```typescript
+{
+  success: boolean;
+}
+```
+
+---
+
+## 📦 Orders API
+
+### **orders.create** — Создать заказ
+
+**Запрос:**
+```typescript
+{
+  // Контакт
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string;
+
+  // Доставка
+  deliveryAddress: {
+    city: string;
+    street: string;
+    house: string;
+    apartment?: string;
+    entrance?: string;
+    floor?: string;
+    intercom?: string;
+  };
+  deliveryDate: string; // ISO date
+  deliveryTime: '9-12' | '12-15' | '15-18' | '18-21';
+  deliveryComment?: string;
+
+  // Получатель (если отличается от заказчика)
+  recipientName?: string;
+  recipientPhone?: string;
+
+  // Дополнительно
+  greetingCardText?: string;
+  giftWrap?: 'standard' | 'premium';
+
+  // Оплата
+  paymentMethod: 'online' | 'cash_on_delivery';
+
+  // Промокод
+  promoCode?: string;
+}
+```
+
+**Ответ:**
+```typescript
+{
+  order: {
+    id: string;
+    orderNumber: string; // #12345
+    totalAmount: number;
+    status: 'NEW';
+    paymentStatus: 'PENDING' | 'PAID';
+    paymentUrl?: string; // Если paymentMethod = 'online'
+  };
+}
+```
+
+**Процесс:**
+1. Валидация данных (Zod схемы)
+2. Применение промокода (если есть)
+3. Расчёт доставки
+4. Создание заказа в БД
+5. Если online → создание платежа в ЮKassa
+6. Отправка SMS/Email подтверждения
+
+---
+
+### **orders.getById** — Получить заказ
+
+**Запрос:**
+```typescript
+{
+  orderId: string;
+}
+```
+
+**Ответ:**
+```typescript
+{
+  id: string;
+  orderNumber: string;
+
+  // Суммы
+  subtotal: number;
+  discount: number;
+  deliveryFee: number;
+  totalAmount: number;
+
+  // Статусы
+  status: OrderStatus;
+  paymentStatus: PaymentStatus;
+
+  // Контакт
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string;
+
+  // Доставка
+  deliveryAddress: Address;
+  deliveryDate: string;
+  deliveryTime: string;
+
+  // Товары
+  items: OrderItem[];
+
+  // История
+  history: OrderHistoryItem[];
+
+  createdAt: string;
+}
+```
+
+---
+
+### **orders.list** — Список заказов (для клиента)
+
+**Запрос:**
+```typescript
+{
+  page?: number;
+  limit?: number;
+  status?: OrderStatus;
+}
+```
+
+**Ответ:**
+```typescript
+{
+  items: Order[];
+  total: number;
+  page: number;
+  pages: number;
+}
+```
+
+---
+
+### **orders.trackStatus** — Отследить статус
+
+**Запрос:**
+```typescript
+{
+  orderNumber: string; // #12345
+}
+```
+
+**Ответ:**
+```typescript
+{
+  orderNumber: string;
+  status: OrderStatus;
+  statusLabel: string; // "Заказ собирается"
+  estimatedDelivery: string; // "Сегодня, 15:00-18:00"
+  timeline: {
+    step: string;
+    label: string;
+    completedAt?: string;
+    isActive: boolean;
+  }[];
+}
+
+// Пример timeline:
+[
+  { step: 'NEW', label: 'Заказ получен', completedAt: '2026-01-27T10:00:00Z', isActive: false },
+  { step: 'CONFIRMED', label: 'Подтверждён', completedAt: '2026-01-27T10:30:00Z', isActive: false },
+  { step: 'PROCESSING', label: 'Собирается', completedAt: null, isActive: true },
+  { step: 'SHIPPED', label: 'В доставке', completedAt: null, isActive: false },
+  { step: 'DELIVERED', label: 'Доставлен', completedAt: null, isActive: false },
+]
+```
+
+---
+
+## 🔑 User API
+
+### **user.register** — Регистрация
+
+**Запрос:**
+```typescript
+{
+  email: string;
+  password: string; // Минимум 8 символов
+  name: string;
+  phone?: string;
+}
+```
+
+**Ответ:**
+```typescript
+{
+  user: {
+    id: string;
+    email: string;
+    name: string;
+  };
+  session: Session;
+}
+```
+
+---
+
+### **user.login** — Вход
+
+Используется NextAuth.js:
+```typescript
+import { signIn } from 'next-auth/react';
+
+await signIn('credentials', {
+  email: 'user@example.com',
+  password: 'password',
+  redirect: false,
+});
+```
+
+---
+
+### **user.getProfile** — Получить профиль
+
+**Запрос:** (без параметров, берёт из сессии)
+
+**Ответ:**
+```typescript
+{
+  id: string;
+  email: string;
+  name: string;
+  phone: string;
+  birthDate?: string;
+  role: 'CUSTOMER' | 'ADMIN' | 'MANAGER';
+  createdAt: string;
+
+  // Статистика
+  orderCount: number;
+  totalSpent: number;
+}
+```
+
+---
+
+### **user.updateProfile** — Обновить профиль
+
+**Запрос:**
+```typescript
+{
+  name?: string;
+  phone?: string;
+  birthDate?: string; // ISO date
+}
+```
+
+**Ответ:**
+```typescript
+{
+  user: User;
+}
+```
+
+---
+
+### **user.changePassword** — Сменить пароль
+
+**Запрос:**
+```typescript
+{
+  currentPassword: string;
+  newPassword: string;
+}
+```
+
+**Ответ:**
+```typescript
+{
+  success: boolean;
+}
+```
+
+---
+
+## 📍 Addresses API
+
+### **addresses.list** — Список адресов
+
+**Запрос:** (без параметров)
+
+**Ответ:**
+```typescript
+{
+  addresses: Address[];
+}
+
+type Address = {
+  id: string;
+  label: string; // "Дом", "Работа"
+  city: string;
+  street: string;
+  house: string;
+  apartment?: string;
+  entrance?: string;
+  floor?: string;
+  intercom?: string;
+  isDefault: boolean;
+};
+```
+
+---
+
+### **addresses.create** — Добавить адрес
+
+**Запрос:**
+```typescript
+{
+  label: string;
+  city: string;
+  street: string;
+  house: string;
+  apartment?: string;
+  entrance?: string;
+  floor?: string;
+  intercom?: string;
+  isDefault?: boolean;
+}
+```
+
+**Ответ:**
+```typescript
+{
+  address: Address;
+}
+```
+
+---
+
+### **addresses.update** — Обновить адрес
+
+**Запрос:**
+```typescript
+{
+  addressId: string;
+  data: {
+    label?: string;
+    city?: string;
+    street?: string;
+    house?: string;
+    apartment?: string;
+    entrance?: string;
+    floor?: string;
+    intercom?: string;
+    isDefault?: boolean;
+  };
+}
+```
+
+**Ответ:**
+```typescript
+{
+  address: Address;
+}
+```
+
+---
+
+### **addresses.delete** — Удалить адрес
+
+**Запрос:**
+```typescript
+{
+  addressId: string;
+}
+```
+
+**Ответ:**
+```typescript
+{
+  success: boolean;
+}
+```
+
+---
+
+## ⭐ Reviews API
+
+### **reviews.list** — Список отзывов
+
+**Запрос:**
+```typescript
+{
+  productId?: string; // Фильтр по товару
+  rating?: number; // Фильтр по рейтингу (1-5)
+  page?: number;
+  limit?: number;
+}
+```
+
+**Ответ:**
+```typescript
+{
+  items: Review[];
+  total: number;
+  averageRating: number;
+  ratingDistribution: {
+    1: number; // Количество отзывов с 1 звездой
+    2: number;
+    3: number;
+    4: number;
+    5: number;
+  };
+}
+
+type Review = {
+  id: string;
+  user: {
+    name: string;
+    avatarUrl?: string;
+  };
+  rating: number;
+  title: string;
+  comment: string;
+  images: string[];
+  createdAt: string;
+
+  // Ответ администрации
+  adminReply?: {
+    text: string;
+    repliedAt: string;
+  };
+
+  // Полезность
+  helpfulCount: number;
+  unhelpfulCount: number;
+};
+```
+
+---
+
+### **reviews.create** — Создать отзыв
+
+**Запрос:**
+```typescript
+{
+  productId: string;
+  orderId?: string; // Если отзыв после покупки
+  rating: number; // 1-5
+  title: string;
+  comment: string;
+  images?: string[]; // URLs загруженных фото
+}
+```
+
+**Ответ:**
+```typescript
+{
+  review: Review;
+  message: "Отзыв отправлен на модерацию";
+}
+```
+
+---
+
+### **reviews.markHelpful** — Отметить полезным
+
+**Запрос:**
+```typescript
+{
+  reviewId: string;
+  helpful: boolean; // true = helpful, false = unhelpful
+}
+```
+
+**Ответ:**
+```typescript
+{
+  success: boolean;
+}
+```
+
+---
+
+## 🎟️ Promo Codes API
+
+### **promoCodes.validate** — Валидация промокода
+
+**Запрос:**
+```typescript
+{
+  code: string;
+  cartTotal: number; // Сумма корзины (для проверки min_order_amount)
+}
+```
+
+**Ответ:**
+```typescript
+{
+  valid: boolean;
+  promoCode?: {
+    code: string;
+    discountType: 'PERCENTAGE' | 'FIXED_AMOUNT';
+    discountValue: number;
+    calculatedDiscount: number; // Сколько скидка в рублях
+  };
+  error?: string; // Если !valid
+}
+
+// Примеры ошибок:
+"Промокод не найден"
+"Промокод истёк"
+"Промокод уже использован максимальное количество раз"
+"Минимальная сумма заказа для этого промокода: 3000₽"
+```
+
+---
+
+## 📊 Analytics API (для админа)
+
+### **analytics.dashboard** — Дашборд метрики
+
+**Запрос:**
+```typescript
+{
+  period: 'today' | 'week' | 'month' | 'year';
+  compareWith?: 'previous_period'; // Сравнение с предыдущим периодом
+}
+```
+
+**Ответ:**
+```typescript
+{
+  revenue: {
+    current: number;
+    previous?: number;
+    change?: number; // +15% или -10%
+  };
+  orderCount: {
+    current: number;
+    previous?: number;
+    change?: number;
+  };
+  averageOrderValue: {
+    current: number;
+    previous?: number;
+    change?: number;
+  };
+  conversionRate: {
+    current: number; // Процент
+    previous?: number;
+    change?: number;
+  };
+
+  // График продаж (по дням/неделям/месяцам)
+  salesChart: {
+    labels: string[]; // Даты
+    values: number[]; // Выручка
+  };
+
+  // Топ-10 товаров
+  topProducts: {
+    productId: string;
+    name: string;
+    revenue: number;
+    salesCount: number;
+  }[];
+}
+```
+
+---
+
+## 🔐 Admin API
+
+### **admin.orders.list** — Список заказов (админ)
+
+**Запрос:**
+```typescript
+{
+  status?: OrderStatus;
+  paymentStatus?: PaymentStatus;
+  dateFrom?: string; // ISO date
+  dateTo?: string;
+  search?: string; // Поиск по номеру, имени, телефону
+  page?: number;
+  limit?: number;
+}
+```
+
+**Ответ:**
+```typescript
+{
+  items: Order[];
+  total: number;
+  page: number;
+  pages: number;
+}
+```
+
+---
+
+### **admin.orders.updateStatus** — Обновить статус заказа
+
+**Запрос:**
+```typescript
+{
+  orderId: string;
+  newStatus: OrderStatus;
+  comment?: string; // Комментарий к изменению
+}
+```
+
+**Ответ:**
+```typescript
+{
+  order: Order;
+  message: "Статус обновлён, клиенту отправлено SMS уведомление";
+}
+```
+
+---
+
+### **admin.products.create** — Создать товар
+
+**Запрос:**
+```typescript
+{
+  name: string;
+  slug: string;
+  description: string;
+  price: number;
+  compareAtPrice?: number;
+  categoryId: string;
+  images: string[];
+  stock: number;
+  sku: string;
+  weight?: number;
+  height?: number;
+  flowerTypes?: string[];
+  colors?: string[];
+  occasions?: string[];
+  metaTitle?: string;
+  metaDescription?: string;
+  isFeatured?: boolean;
+  isNew?: boolean;
+  isActive?: boolean;
+}
+```
+
+**Ответ:**
+```typescript
+{
+  product: Product;
+}
+```
+
+---
+
+### **admin.products.update** — Обновить товар
+
+**Запрос:**
+```typescript
+{
+  productId: string;
+  data: {
+    // Любые поля из create (частичное обновление)
+  };
+}
+```
+
+**Ответ:**
+```typescript
+{
+  product: Product;
+}
+```
+
+---
+
+### **admin.products.delete** — Удалить товар
+
+**Запрос:**
+```typescript
+{
+  productId: string;
+}
+```
+
+**Ответ:**
+```typescript
+{
+  success: boolean;
+}
+```
+
+---
+
+## 🌐 Webhooks
+
+### **ЮKassa webhook** — Уведомление о платеже
+
+**Endpoint**: `POST /api/webhooks/yukassa`
+
+**Тело запроса:**
+```json
+{
+  "type": "notification",
+  "event": "payment.succeeded" | "payment.canceled" | "refund.succeeded",
+  "object": {
+    "id": "payment_id",
+    "status": "succeeded",
+    "amount": {
+      "value": "3500.00",
+      "currency": "RUB"
+    },
+    "metadata": {
+      "order_id": "order_123"
+    }
+  }
+}
+```
+
+**Обработка:**
+1. Верификация подписи (HMAC SHA256)
+2. Обновление статуса заказа:
+   - `payment.succeeded` → `paymentStatus = 'PAID'`, `status = 'CONFIRMED'`
+   - `payment.canceled` → `paymentStatus = 'FAILED'`
+3. Отправка SMS/Email клиенту
+4. Создание записи в `order_history`
+
+**Ответ:**
+```json
+{
+  "success": true
+}
+```
+
+---
+
+## 🔒 Rate Limiting
+
+### Лимиты по эндпоинтам:
+
+| Эндпоинт | Лимит | Период |
+|----------|-------|--------|
+| `user.register` | 5 попыток | 15 минут |
+| `user.login` | 5 попыток | 15 минут |
+| `orders.create` | 10 заказов | 1 час |
+| `reviews.create` | 5 отзывов | 1 день |
+| Остальные | 100 запросов | 1 минута |
+
+### Заголовки ответа:
+
+```
+X-RateLimit-Limit: 100
+X-RateLimit-Remaining: 95
+X-RateLimit-Reset: 1706362800
+```
+
+---
+
+## ❌ Обработка ошибок
+
+### Формат ошибки:
+
+```typescript
+{
+  error: {
+    code: string; // "VALIDATION_ERROR", "NOT_FOUND", "UNAUTHORIZED"
+    message: string; // Человеко-читаемое сообщение
+    details?: any; // Дополнительные детали (например, Zod ошибки)
+  };
+}
+```
+
+### HTTP статусы:
+
+- `200` — Успех
+- `400` — Ошибка валидации
+- `401` — Не авторизован
+- `403` — Доступ запрещён
+- `404` — Не найдено
+- `429` — Превышен rate limit
+- `500` — Внутренняя ошибка сервера
+
+---
+
+## 🧪 Примеры использования (tRPC)
+
+### Клиентская часть (React)
+
+```typescript
+import { trpc } from '@/lib/trpc';
+
+function ProductList() {
+  // Query
+  const { data, isLoading, error } = trpc.products.list.useQuery({
+    categoryId: 'cat_bouquets',
+    page: 1,
+    limit: 24,
+  });
+
+  // Mutation
+  const addToCart = trpc.cart.add.useMutation({
+    onSuccess: () => {
+      toast.success('Добавлено в корзину');
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const handleAddToCart = (productId: string) => {
+    addToCart.mutate({ productId, quantity: 1 });
+  };
+
+  if (isLoading) return <Skeleton />;
+  if (error) return <Error message={error.message} />;
+
+  return (
+    <div>
+      {data.items.map((product) => (
+        <ProductCard
+          key={product.id}
+          product={product}
+          onAddToCart={() => handleAddToCart(product.id)}
+        />
+      ))}
+    </div>
+  );
+}
+```
+
+### Серверная часть (tRPC Router)
+
+```typescript
+import { router, publicProcedure } from '@/server/trpc';
+import * as z from 'zod';
+
+export const productsRouter = router({
+  list: publicProcedure
+    .input(
+      z.object({
+        categoryId: z.string().optional(),
+        priceFrom: z.number().optional(),
+        priceTo: z.number().optional(),
+        page: z.number().default(1),
+        limit: z.number().default(24),
+      })
+    )
+    .query(async ({ input, ctx }) => {
+      const { categoryId, priceFrom, priceTo, page, limit } = input;
+
+      const where = {
+        ...(categoryId && { categoryId }),
+        ...(priceFrom && { price: { gte: priceFrom } }),
+        ...(priceTo && { price: { lte: priceTo } }),
+        isActive: true,
+      };
+
+      const [items, total] = await Promise.all([
+        ctx.prisma.product.findMany({
+          where,
+          skip: (page - 1) * limit,
+          take: limit,
+          include: {
+            category: true,
+          },
+        }),
+        ctx.prisma.product.count({ where }),
+      ]);
+
+      return {
+        items,
+        total,
+        page,
+        pages: Math.ceil(total / limit),
+      };
+    }),
+
+  add: publicProcedure
+    .input(
+      z.object({
+        productId: z.string(),
+        quantity: z.number().min(1),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      // Логика добавления в корзину
+      // ...
+    }),
+});
+```
+
+---
+
+**Статус**: ✅ Готова к имплементации
+**Версия**: 1.0
+**Последнее обновление**: Январь 2026

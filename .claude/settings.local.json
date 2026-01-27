@@ -1,0 +1,35 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(tree:*)",
+      "Bash(composer:*)",
+      "Bash(COMPOSER_ALLOW_SUPERUSER=1 composer create-project:*)",
+      "Bash(apt-get update:*)",
+      "Bash(apt-get install:*)",
+      "Bash(COMPOSER_ALLOW_SUPERUSER=1 composer install:*)",
+      "Bash(COMPOSER_ALLOW_SUPERUSER=1 composer require:*)",
+      "Bash(php artisan:*)",
+      "Bash(sudo systemctl status:*)",
+      "Bash(docker-compose ps:*)",
+      "Bash(pg_ctl:*)",
+      "Bash(sudo apt-get update:*)",
+      "Bash(sudo apt-get install:*)",
+      "Bash(sudo pg_ctlcluster:*)",
+      "Bash(sudo -u postgres psql:*)",
+      "Bash(jq:*)",
+      "WebFetch(domain:www.anthropic.com)",
+      "WebFetch(domain:howborisusesclaudecode.com)",
+      "WebFetch(domain:www.humanlayer.dev)",
+      "Bash(pnpm add:*)",
+      "Bash(pnpm dev:*)",
+      "Bash(pnpm build:*)",
+      "Bash(pnpm list:*)",
+      "Bash(while read file)",
+      "Bash(done)",
+      "Bash(du:*)",
+      "Bash(while read f)",
+      "Bash(python3:*)",
+      "Bash(git init:*)"
+    ]
+  }
+}

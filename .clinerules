@@ -1,0 +1,779 @@
+# 🎯 ПРАВИЛА КОДИРОВАНИЯ | FLOWER SHOP E-COMMERCE
+# Основано на официальной документации и лучших практиках 2026
+
+## 📚 ИСТОЧНИКИ (Official Documentation)
+# Next.js 16: https://nextjs.org/docs/app/guides/upgrading/version-16
+# React 19: https://react.dev/blog/2024/12/05/react-19
+# Laravel 11: https://laravel.com/docs/11.x/contributions
+# TypeScript 5.9: https://www.typescriptlang.org/docs/handbook/declaration-files/do-s-and-don-ts.html
+# Google TypeScript Style: https://google.github.io/styleguide/tsguide.html
+
+---
+
+## 🌟 ОБЩИЕ ПРИНЦИПЫ (MANDATORY)
+
+### ✅ Переиспользуемость кода
+- **DRY (Don't Repeat Yourself)**: Если код повторяется 2+ раза, выносить в функцию/компонент
+- **Single Responsibility Principle**: Одна функция = одна задача
+- **Composability**: Маленькие функции, которые можно комбинировать
+- **Pure Functions**: Предпочитать чистые функции без side effects
+
+### ✅ Модульность
+- **Separation of Concerns**: Логика, UI, стили в отдельных файлах
+- **Feature-based structure**: Группировать файлы по фичам, не по типам
+- **Explicit imports**: Никаких `import *`, только named imports
+- **Interface Segregation**: Маленькие, специфичные интерфейсы
+
+### ✅ Читаемость
+- **Meaningful names**: `getUserOrders()` вместо `get()` или `fetch()`
+- **Verb-noun convention**: `createOrder`, `fetchProducts`, `updateProfile`
+- **No magic numbers**: Все константы в UPPER_CASE
+- **Comments only for "why"**: Код должен быть self-documenting
+
+### ✅ Type Safety
+- **No `any` type**: Использовать `unknown` или конкретный тип
+- **Strict mode enabled**: `"strict": true` в tsconfig.json
+- **Explicit return types**: Всегда указывать return type для функций
+- **Type guards**: Использовать type narrowing для безопасности
+
+---
+
+## ⚛️ REACT 19 BEST PRACTICES
+
+### 1. Component Structure
+```typescript
+// ✅ ПРАВИЛЬНО: Функциональный компонент с явными типами
+interface ProductCardProps {
+  product: Product
+  onAddToCart: (id: string) => void
+}
+
+export function ProductCard({ product, onAddToCart }: ProductCardProps) {
+  return (...)
+}
+
+// ❌ НЕПРАВИЛЬНО: без типов, default export
+export default function ProductCard(props: any) {
+  return (...)
+}
+```
+
+### 2. Hooks Rules (React 19)
+- **useActionState** для form submissions вместо useState + onSubmit
+- **useOptimistic** для optimistic UI updates
+- **useFormStatus** для loading states форм
+- **use()** API для async data fetching в компонентах
+- **Всегда named exports** для hooks: `export function useCart() {}`
+
+### 3. Server vs Client Components
+```typescript
+// ✅ Server Component (default) - для статики и data fetching
+export default async function ProductPage({ params }: { params: { id: string } }) {
+  const product = await fetchProduct(params.id)
+  return <ProductDetail product={product} />
+}
+
+// ✅ Client Component - для интерактивности
+'use client'
+export function AddToCartButton({ productId }: { productId: string }) {
+  const [isPending, startTransition] = useTransition()
+  // ...
+}
+```
+
+**Правило:** Используй Server Components по умолчанию, Client Components только для:
+- Event handlers (onClick, onChange)
+- State (useState, useReducer)
+- Effects (useEffect)
+- Browser APIs (localStorage, window)
+
+### 4. Data Fetching
+```typescript
+// ✅ ПРАВИЛЬНО: async Server Component
+export default async function Page() {
+  const data = await fetch('https://api.example.com/data', {
+    next: { revalidate: 3600 } // ISR
+  })
+  return <Component data={data} />
+}
+
+// ❌ НЕПРАВИЛЬНО: useEffect в Server Component
+export default function Page() {
+  const [data, setData] = useState(null)
+  useEffect(() => {
+    fetch('...').then(setData) // ❌ Не делать так
+  }, [])
+}
+```
+
+### 5. Performance
+- **React.memo()** не нужен в большинстве случаев (React 19 Compiler auto-memoize)
+- **Lazy loading**: Используй `React.lazy()` для тяжелых компонентов
+- **Suspense boundaries**: Оборачивай async components в `<Suspense>`
+- **Code splitting**: Один роут = один chunk (автоматически в Next.js)
+
+---
+
+## 🚀 NEXT.JS 16 BEST PRACTICES
+
+### 1. File Structure
+```
+app/
+├── (routes)/
+│   ├── page.tsx              # Server Component
+│   ├── layout.tsx            # Layout wrapper
+│   ├── loading.tsx           # Loading UI
+│   ├── error.tsx             # Error boundary
+│   └── not-found.tsx         # 404 page
+├── _components/              # Приватные компоненты роута
+│   └── ProductCard.tsx
+└── api/                      # API routes (если нужны)
+    └── route.ts
+```
+
+### 2. Async API Rules (Next.js 16)
+**ОБЯЗАТЕЛЬНО:** Все params, cookies, headers теперь ASYNC!
+
+```typescript
+// ✅ ПРАВИЛЬНО (Next.js 16)
+export default async function Page({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+  return <div>{id}</div>
+}
+
+// ✅ ПРАВИЛЬНО: headers, cookies
+import { cookies, headers } from 'next/headers'
+
+export async function GET() {
+  const cookieStore = await cookies()
+  const headersList = await headers()
+  const token = cookieStore.get('token')
+  return Response.json({ token })
+}
+
+// ❌ НЕПРАВИЛЬНО: синхронный доступ
+const { id } = params // ❌ Error в Next.js 16!
+```
+
+### 3. Caching Strategy (Next.js 16)
+```typescript
+// ✅ Явный контроль кэша (новые API)
+import { revalidateTag, updateTag } from 'next/cache'
+
+// В Server Component или API route
+await fetch('https://api.example.com/products', {
+  next: {
+    tags: ['products'], // Тегируем запрос
+    revalidate: 3600 // ISR: 1 час
+  }
+})
+
+// Инвалидация кэша
+revalidateTag('products') // После создания/обновления товара
+```
+
+### 4. Metadata (SEO)
+```typescript
+// ✅ ПРАВИЛЬНО: Dynamic metadata
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+  const product = await fetchProduct(id)
+
+  return {
+    title: product.name,
+    description: product.description,
+    openGraph: {
+      images: [product.images[0]]
+    }
+  }
+}
+
+// ✅ Static metadata
+export const metadata = {
+  title: 'Главная',
+  description: 'Интернет-магазин цветов'
+}
+```
+
+### 5. Turbopack (Next.js 16 default)
+- **Не настраивать webpack** - Turbopack теперь default
+- **2-5x быстрее сборки** - работает out of the box
+- **Hot Reload за <1s** - автоматически
+
+---
+
+## 🎨 TYPESCRIPT 5.9 BEST PRACTICES
+
+### 1. Type Definitions
+```typescript
+// ✅ ПРАВИЛЬНО: Явные типы
+interface Product {
+  id: string
+  name: string
+  price: number
+  images: string[]
+  category: Category
+}
+
+type Category = 'bouquets' | 'plants' | 'gifts' | 'occasions'
+
+// ✅ Utility types
+type ProductPreview = Pick<Product, 'id' | 'name' | 'price'>
+type PartialProduct = Partial<Product>
+type RequiredProduct = Required<Product>
+
+// ❌ НЕПРАВИЛЬНО
+const product: any = { ... } // ❌ Never use `any`
+```
+
+### 2. Function Types
+```typescript
+// ✅ ПРАВИЛЬНО: Explicit return type
+function calculateTotal(items: CartItem[]): number {
+  return items.reduce((sum, item) => sum + item.price * item.quantity, 0)
+}
+
+// ✅ Async functions
+async function fetchProduct(id: string): Promise<Product> {
+  const response = await fetch(`/api/products/${id}`)
+  return response.json()
+}
+
+// ❌ НЕПРАВИЛЬНО: без return type
+function calculateTotal(items: CartItem[]) { // ❌
+  return items.reduce(...)
+}
+```
+
+### 3. Type Guards
+```typescript
+// ✅ ПРАВИЛЬНО: Type narrowing
+function isProduct(item: unknown): item is Product {
+  return (
+    typeof item === 'object' &&
+    item !== null &&
+    'id' in item &&
+    'name' in item
+  )
+}
+
+// Usage
+if (isProduct(data)) {
+  console.log(data.name) // ✅ TypeScript knows it's Product
+}
+```
+
+### 4. Generic Types
+```typescript
+// ✅ ПРАВИЛЬНО: Переиспользуемые дженерики
+interface ApiResponse<T> {
+  data: T
+  status: number
+  message: string
+}
+
+async function apiFetch<T>(url: string): Promise<ApiResponse<T>> {
+  const response = await fetch(url)
+  return response.json()
+}
+
+// Usage
+const products = await apiFetch<Product[]>('/api/products')
+```
+
+### 5. Never use
+- ❌ `any` - использовать `unknown` или конкретный тип
+- ❌ `// @ts-ignore` - лучше исправить тип
+- ❌ `Object` - использовать `object` или конкретный интерфейс
+- ❌ `Function` - указывать конкретную сигнатуру
+
+---
+
+## 🐘 LARAVEL 11 BEST PRACTICES
+
+### 1. Controller Structure
+```php
+// ✅ ПРАВИЛЬНО: Thin controllers, fat services
+class ProductController extends Controller
+{
+    public function __construct(
+        private ProductService $productService
+    ) {}
+
+    public function index(Request $request): JsonResponse
+    {
+        $products = $this->productService->getFilteredProducts(
+            $request->validated()
+        );
+
+        return ProductResource::collection($products);
+    }
+}
+
+// ❌ НЕПРАВИЛЬНО: Бизнес-логика в контроллере
+public function index(Request $request) {
+    $query = Product::query();
+    if ($request->category_id) {
+        $query->where('category_id', $request->category_id);
+    }
+    // ... 50 строк логики ❌
+}
+```
+
+### 2. Service Layer
+```php
+// ✅ ПРАВИЛЬНО: Вся бизнес-логика в сервисах
+class OrderService
+{
+    public function __construct(
+        private PromoCodeService $promoCodeService,
+        private NotificationService $notificationService
+    ) {}
+
+    public function createOrder(array $data, ?int $userId = null): Order
+    {
+        DB::beginTransaction();
+
+        try {
+            $order = $this->buildOrder($data, $userId);
+            $this->processOrderItems($order, $data['items']);
+            $this->applyPromoCode($order, $data['promo_code'] ?? null);
+
+            DB::commit();
+
+            event(new OrderCreated($order));
+
+            return $order;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
+    private function buildOrder(array $data, ?int $userId): Order
+    {
+        return Order::create([...]);
+    }
+}
+```
+
+### 3. Eloquent Best Practices
+```php
+// ✅ ПРАВИЛЬНО: Eloquent с relationships
+class Product extends Model
+{
+    protected $fillable = [
+        'name', 'slug', 'description', 'price', 'category_id'
+    ];
+
+    protected $casts = [
+        'images' => 'array',
+        'flower_types' => 'array',
+        'price' => 'decimal:2',
+        'is_active' => 'boolean'
+    ];
+
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(Category::class);
+    }
+
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(Review::class);
+    }
+
+    // Scopes
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
+    }
+
+    public function scopeFeatured($query)
+    {
+        return $query->where('is_featured', true);
+    }
+}
+
+// Usage
+$products = Product::active()
+    ->featured()
+    ->with(['category', 'reviews'])
+    ->paginate(24);
+
+// ❌ НЕПРАВИЛЬНО: Raw SQL
+$products = DB::select('SELECT * FROM products WHERE is_active = 1'); // ❌
+```
+
+### 4. Form Requests
+```php
+// ✅ ПРАВИЛЬНО: Dedicated Form Request
+class StoreOrderRequest extends FormRequest
+{
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    public function rules(): array
+    {
+        return [
+            'customer_name' => ['required', 'string', 'max:255'],
+            'customer_email' => ['required', 'email'],
+            'customer_phone' => ['required', 'regex:/^\+7 \(\d{3}\) \d{3}-\d{2}-\d{2}$/'],
+            'items' => ['required', 'array', 'min:1'],
+            'items.*.product_id' => ['required', 'exists:products,id'],
+            'items.*.quantity' => ['required', 'integer', 'min:1'],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'customer_name.required' => 'Введите ваше имя',
+            'customer_email.email' => 'Некорректный email',
+        ];
+    }
+}
+
+// Usage in Controller
+public function store(StoreOrderRequest $request): JsonResponse
+{
+    $validated = $request->validated(); // ✅ Уже валидировано
+}
+```
+
+### 5. API Resources
+```php
+// ✅ ПРАВИЛЬНО: API Resources для consistent output
+class ProductResource extends JsonResource
+{
+    public function toArray($request): array
+    {
+        return [
+            'id' => $this->id,
+            'name' => $this->name,
+            'slug' => $this->slug,
+            'price' => $this->price,
+            'images' => $this->images,
+            'category' => new CategoryResource($this->whenLoaded('category')),
+            'rating' => $this->reviews_avg_rating ?? 0,
+            'review_count' => $this->reviews_count ?? 0,
+            'is_available' => $this->stock > 0,
+            'created_at' => $this->created_at?->toIso8601String(),
+        ];
+    }
+}
+
+// Usage
+return ProductResource::collection($products);
+return new ProductResource($product);
+```
+
+### 6. Events & Listeners
+```php
+// ✅ ПРАВИЛЬНО: Event-driven архитектура
+class OrderCreated
+{
+    public function __construct(
+        public Order $order
+    ) {}
+}
+
+class SendOrderConfirmation implements ShouldQueue
+{
+    public function handle(OrderCreated $event): void
+    {
+        Mail::to($event->order->customer_email)
+            ->send(new OrderConfirmed($event->order));
+    }
+}
+
+// В EventServiceProvider
+protected $listen = [
+    OrderCreated::class => [
+        SendOrderConfirmation::class,
+        NotifyAdmin::class,
+        UpdateInventory::class,
+    ],
+];
+```
+
+---
+
+## 📦 КОМПОНЕНТЫ (Component Patterns)
+
+### 1. Atomic Design
+```
+components/
+├── atoms/              # Базовые элементы
+│   ├── Button.tsx
+│   ├── Input.tsx
+│   └── Badge.tsx
+├── molecules/          # Простые композиции
+│   ├── SearchBar.tsx
+│   ├── QuantitySelector.tsx
+│   └── PriceDisplay.tsx
+├── organisms/          # Сложные блоки
+│   ├── ProductCard.tsx
+│   ├── CheckoutForm.tsx
+│   └── Navigation.tsx
+└── templates/          # Layouts
+    ├── MainLayout.tsx
+    └── AdminLayout.tsx
+```
+
+### 2. Component Rules
+```typescript
+// ✅ ПРАВИЛЬНО: Small, focused components
+interface ButtonProps {
+  children: React.ReactNode
+  variant?: 'primary' | 'secondary' | 'outline'
+  size?: 'sm' | 'md' | 'lg'
+  onClick?: () => void
+  disabled?: boolean
+}
+
+export function Button({
+  children,
+  variant = 'primary',
+  size = 'md',
+  onClick,
+  disabled = false
+}: ButtonProps) {
+  const baseStyles = 'rounded-lg font-semibold transition-all'
+  const variantStyles = {
+    primary: 'bg-pink-600 text-white hover:bg-pink-700',
+    secondary: 'bg-gray-200 text-gray-800 hover:bg-gray-300',
+    outline: 'border-2 border-pink-600 text-pink-600 hover:bg-pink-50'
+  }
+  const sizeStyles = {
+    sm: 'px-4 py-2 text-sm',
+    md: 'px-6 py-3 text-base',
+    lg: 'px-8 py-4 text-lg'
+  }
+
+  return (
+    <button
+      className={`${baseStyles} ${variantStyles[variant]} ${sizeStyles[size]}`}
+      onClick={onClick}
+      disabled={disabled}
+    >
+      {children}
+    </button>
+  )
+}
+```
+
+### 3. Custom Hooks
+```typescript
+// ✅ ПРАВИЛЬНО: Переиспользуемая логика в hooks
+export function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value)
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedValue(value), delay)
+    return () => clearTimeout(timer)
+  }, [value, delay])
+
+  return debouncedValue
+}
+
+// Usage
+const searchQuery = useDebounce(inputValue, 300)
+```
+
+---
+
+## 🔒 SECURITY RULES
+
+### 1. Frontend Security
+- **Never store secrets** в environment variables
+- **Validate all inputs** на клиенте (но не доверять)
+- **Sanitize user content** перед отображением
+- **Use HTTPS only** в production
+- **CSP headers** для защиты от XSS
+
+### 2. Backend Security
+```php
+// ✅ ПРАВИЛЬНО: Eloquent защищает от SQL Injection
+Product::where('name', $request->search)->get(); // ✅ Safe
+
+// ❌ НЕПРАВИЛЬНО: Raw SQL vulnerable
+DB::select("SELECT * FROM products WHERE name = '$request->search'"); // ❌ SQL Injection!
+
+// ✅ Authorization
+public function update(Request $request, Order $order)
+{
+    $this->authorize('update', $order); // ✅ Policy check
+    // ...
+}
+
+// ✅ CSRF Protection (автоматически в Laravel)
+// ✅ Mass Assignment Protection
+protected $guarded = ['id', 'created_at', 'updated_at'];
+```
+
+---
+
+## 🧪 TESTING RULES
+
+### 1. Test Structure
+```typescript
+// ✅ Frontend: Vitest + Testing Library
+describe('ProductCard', () => {
+  it('should display product name and price', () => {
+    const product = { id: '1', name: 'Rose', price: 500 }
+    render(<ProductCard product={product} />)
+
+    expect(screen.getByText('Rose')).toBeInTheDocument()
+    expect(screen.getByText('500 ₽')).toBeInTheDocument()
+  })
+
+  it('should call onAddToCart when button clicked', async () => {
+    const onAddToCart = vi.fn()
+    render(<ProductCard product={product} onAddToCart={onAddToCart} />)
+
+    await userEvent.click(screen.getByText('В корзину'))
+    expect(onAddToCart).toHaveBeenCalledWith('1')
+  })
+})
+```
+
+```php
+// ✅ Backend: PHPUnit
+class OrderServiceTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_creates_order_with_items(): void
+    {
+        $product = Product::factory()->create(['price' => 1000, 'stock' => 10]);
+
+        $order = $this->orderService->createOrder([
+            'customer_name' => 'Иван Иванов',
+            'customer_email' => 'ivan@example.com',
+            'customer_phone' => '+7 (999) 123-45-67',
+            'items' => [
+                ['product_id' => $product->id, 'quantity' => 2]
+            ]
+        ]);
+
+        $this->assertDatabaseHas('orders', [
+            'customer_name' => 'Иван Иванов',
+            'total_amount' => 2500 // 2000 + 500 delivery
+        ]);
+
+        $this->assertEquals(8, $product->fresh()->stock);
+    }
+}
+```
+
+---
+
+## 📏 FILE SIZE LIMITS (Anthropic Recommendations)
+
+**Источник:** [Claude Code Best Practices](https://www.anthropic.com/engineering/claude-code-best-practices), [HumanLayer CLAUDE.md Guide](https://www.humanlayer.dev/blog/writing-a-good-claude-md)
+
+### Обязательные лимиты
+- **CLAUDE.md (root)**: < 60 строк (рекомендация HumanLayer/Anthropic)
+- **CLAUDE.md (nested)**: < 100 строк
+- **Utility functions**: < 50 строк на функцию
+- **Components**: < 200 строк
+- **Services/Controllers**: < 300 строк
+- **Test files**: < 300 строк
+
+### Причина ограничений
+- **Context window**: 200K tokens (стандарт Claude Sonnet)
+- **Performance degradation**: Производительность падает в последней 1/5 части контекста
+- **Better accuracy**: Маленькие файлы = лучшее понимание Claude
+- **Reusability**: Маленькие модули легче переиспользовать
+
+### Что делать при превышении лимита
+```typescript
+// ❌ ПЛОХО: Один огромный файл (500+ строк)
+// components/CheckoutPage.tsx
+
+// ✅ ХОРОШО: Разбить на модули
+components/checkout/
+├── CheckoutPage.tsx          (< 100 строк - orchestrator)
+├── ContactForm.tsx           (< 150 строк)
+├── DeliveryForm.tsx          (< 150 строк)
+├── PaymentMethodSelector.tsx (< 100 строк)
+└── OrderSummary.tsx          (< 150 строк)
+```
+
+## 📝 NAMING CONVENTIONS
+
+### Frontend (TypeScript/React)
+- **Files**: PascalCase для компонентов (`ProductCard.tsx`), camelCase для утилит (`formatPrice.ts`)
+- **Components**: PascalCase (`function ProductCard() {}`)
+- **Hooks**: camelCase с префиксом `use` (`useCart`, `useAuth`)
+- **Types/Interfaces**: PascalCase (`interface Product {}`)
+- **Constants**: UPPER_SNAKE_CASE (`const MAX_CART_ITEMS = 50`)
+
+### Backend (PHP/Laravel)
+- **Classes**: PascalCase (`class ProductService {}`)
+- **Methods**: camelCase (`public function createOrder() {}`)
+- **Variables**: camelCase (`$orderTotal`)
+- **Constants**: UPPER_SNAKE_CASE (`const MAX_FILE_SIZE = 5120`)
+- **Database tables**: snake_case plural (`products`, `order_items`)
+- **Database columns**: snake_case (`customer_name`, `created_at`)
+
+---
+
+## 🚫 ЗАПРЕЩЕНО
+
+### ❌ Anti-patterns
+1. **God Objects** - классы/компоненты с 500+ строками кода
+2. **Prop Drilling** - передача props через 3+ уровня (использовать Context)
+3. **Magic Numbers** - хардкод чисел без объяснения
+4. **Commented Code** - удалять, не комментировать
+5. **console.log()** в production - использовать proper logging
+6. **setTimeout/setInterval** без cleanup
+7. **fetch без error handling**
+8. **Мутация props** - props immutable!
+9. **Direct DOM manipulation** в React
+10. **SQL Injection** - всегда использовать Eloquent/prepared statements
+
+### ❌ Плохие практики
+- Смешивать логику и представление в одном файле
+- Дублировать код вместо создания функций
+- Использовать `any` в TypeScript
+- Хардкодить API URLs (использовать .env)
+- Игнорировать TypeScript ошибки
+- Не обрабатывать edge cases
+- Не писать тесты для критичной логики
+
+---
+
+## ✅ CODE REVIEW CHECKLIST
+
+Перед коммитом проверь:
+- [ ] Нет повторяющегося кода (DRY)
+- [ ] Все функции < 50 строк
+- [ ] Все типы явно указаны (TypeScript)
+- [ ] Нет использования `any`, `@ts-ignore`
+- [ ] Все публичные функции документированы
+- [ ] Обработаны все error cases
+- [ ] Нет хардкода (все в .env или константах)
+- [ ] Код проходит lint (ESLint, Laravel Pint)
+- [ ] Добавлены тесты для новой логики
+- [ ] Компоненты переиспользуемые
+
+---
+
+## 📚 ДОПОЛНИТЕЛЬНЫЕ ИСТОЧНИКИ
+
+- [Next.js 16 Docs](https://nextjs.org/docs/app/guides/upgrading/version-16)
+- [React 19 Blog](https://react.dev/blog/2024/12/05/react-19)
+- [Laravel 11 Docs](https://laravel.com/docs/11.x)
+- [TypeScript Handbook](https://www.typescriptlang.org/docs/handbook/intro.html)
+- [Google TypeScript Style Guide](https://google.github.io/styleguide/tsguide.html)
+- [Patterns.dev React 2026](https://www.patterns.dev/react/react-2026/)
+
+---
+
+**Версия:** 1.0
+**Дата обновления:** 27 января 2026
+**Статус:** Обязательно для соблюдения

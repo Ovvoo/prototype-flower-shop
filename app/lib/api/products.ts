@@ -23,8 +23,13 @@ export const productsApi = {
   /**
    * Получить товар по ID
    */
-  getProduct(id: number | string): Promise<ProductWithRelated> {
-    return apiClient.get<ProductWithRelated>(`/products/${id}`);
+  async getProduct(id: number | string): Promise<ProductWithRelated> {
+    const response = await apiClient.get<{ data: Product; related_products: Product[] }>(`/products/${id}`);
+    // Transform API response to ProductWithRelated format
+    return {
+      product: response.data,
+      related_products: response.related_products || [],
+    };
   },
 
   /**

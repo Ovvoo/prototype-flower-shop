@@ -29,7 +29,8 @@
       "Bash(du:*)",
       "Bash(while read f)",
       "Bash(python3:*)",
-      "Bash(git init:*)"
+      "Bash(git init:*)",
+      "Bash(echo:*)"
     ]
   }
 }

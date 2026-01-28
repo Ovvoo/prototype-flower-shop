@@ -1,329 +1,379 @@
-# 🚀 Continuation Prompt для Claude Code
+# 🔄 Continuation Prompt for Next Chat Session
 
-**Используй этот промпт при создании нового чата для продолжения разработки проекта.**
-
----
-
-## 📋 Краткий контекст
-
-Я работаю над проектом **интернет-магазина цветочного салона**:
-- **Backend**: Laravel 11 + PostgreSQL 16
-- **Frontend**: Next.js 16 + React 19 + TypeScript + Tailwind CSS 4
-- **Локация**: `/root/projects/prototype-flower-shop`
-- **UI язык**: Русский
-- **Валюта**: ₽ (рубли)
-
-**Текущий прогресс**: 78% (4.7 из 6 фаз завершено)
+**Date:** 29 января 2026 (поздний вечер)
+**Project:** Flower Shop E-commerce (Next.js 16 + Laravel 11)
+**Last Commit:** d2eb362 (EPIC 7: Advanced Catalog Filters) + 322e425 (Bug fixes)
+**Current Status:** Just fixed Next.js 16 params Promise issue in product pages
 
 ---
 
-## 🎯 Что уже реализовано
+## 📋 IMMEDIATE CONTEXT
 
-### ✅ Завершенные фазы:
+### What Was Just Completed
 
-1. **Setup & Infrastructure** (100%)
-   - PostgreSQL БД с 12 таблицами
-   - Eloquent модели с relationships
-   - Seeders с русскоязычными данными
+1. **EPIC 7: Advanced Catalog Filters** ✅
+   - Backend: Changed filter logic from AND to OR for better UX
+   - Added GET `/api/products/filters` endpoint with 1-hour caching
+   - Frontend: Created 3 new components (CheckboxFilter, FilterGroup, FiltersSkeleton)
+   - Added `useAvailableFilters()` hook and `AvailableFilters` type
+   - Integrated filters into catalog page with URL synchronization
+   - All filters touch-friendly (44px minimum)
+   - Documentation: PHASE_7_ADVANCED_FILTERS.md
 
-2. **Backend API - Публичная часть** (100%)
-   - Products API (list, featured, show)
-   - Categories API (tree structure)
-   - Orders API (create, show, track)
-   - Auth API (register, login)
-   - Reviews API
-   - PromoCode validation
+2. **Bug Fixes** ✅
+   - Fixed hydration mismatch by adding `suppressHydrationWarning` to `<body>` in layout.tsx
+   - Fixed next/image error by configuring `remotePatterns` in next.config.ts for images.unsplash.com
+   - **JUST FIXED:** Next.js 16 params Promise issue in `app/product/[id]/page.tsx`
 
-3. **Frontend - Публичная часть** (85%)
-   - Главная, каталог, страница товара, корзина
-   - Checkout components (ContactStep, DeliveryStep, RecipientStep, PaymentStep)
-   - Navigation, UI компоненты (Button, Input, Select, Textarea, Skeleton)
-   - CartContext
-   - TypeScript types + API client
+### The Next.js 16 params Promise Issue (Just Fixed)
 
-4. **Админ-панель MVP** (100%)
-   - Dashboard со статистикой
-   - Orders management (list, filters)
-   - Products management (list, filters, delete)
-   - Categories management (tree view)
-   - Promo Codes management (list)
-   - Middleware IsAdmin
-   - Reusable components (DataTable, StatusBadge, AdminCard, AdminSidebar)
+**Problem:**
+- User reported product cards not showing
+- Console logs showed: `Route "/product/[id]" used params.id. params is a Promise and must be unwrapped with await`
+
+**Cause:**
+- Next.js 16 breaking change: `params` in dynamic routes is now a Promise
+- Old code: `params: { id: string }`
+- New code: `params: Promise<{ id: string }>`
+
+**Fix Applied:**
+```typescript
+// BEFORE (caused errors):
+type Props = {
+  params: { id: string };
+};
+
+export async function generateMetadata({ params }: Props) {
+  const productData = await fetchProduct(params.id); // ❌ Error
+}
+
+export default async function ProductPage({ params }: Props) {
+  const productData = await fetchProduct(params.id); // ❌ Error
+  return <ProductPageClient productId={params.id} />;
+}
+
+// AFTER (fixed):
+type Props = {
+  params: Promise<{ id: string }>;
+};
+
+export async function generateMetadata({ params }: Props) {
+  const { id } = await params; // ✅ Await the Promise
+  const productData = await fetchProduct(id);
+}
+
+export default async function ProductPage({ params }: Props) {
+  const { id } = await params; // ✅ Await the Promise
+  const productData = await fetchProduct(id);
+  return <ProductPageClient productId={id} />;
+}
+```
+
+**Status:**
+- ✅ Fixed in `app/product/[id]/page.tsx`
+- ✅ Verified `app/[slug]/page.tsx` already correct
+- ✅ Verified `app/order/[orderNumber]/page.tsx` already correct (client component)
+- ✅ TypeScript compilation passes: `npx tsc --noEmit` (0 errors)
 
 ---
 
-## 📂 Ключевые документы (ОБЯЗАТЕЛЬНО ПРОЧИТАЙ)
+## 🎯 IMMEDIATE NEXT STEPS
 
-### **Основные инструкции:**
-```
-@/root/projects/prototype-flower-shop/CLAUDE.md
-@/root/projects/prototype-flower-shop/.claude/rules/07-modularity-components.md
-@/root/projects/prototype-flower-shop/.claude/rules/08-typescript-gotchas.md
-```
+### 1. Restart Next.js Dev Server & Verify Full Workflow
 
-### **API & Database:**
-```
-@/root/projects/prototype-flower-shop/docs/api/NAVIGATION.md
-@/root/projects/prototype-flower-shop/docs/database/DATABASE_INDEX.md
-```
+**Task:** Test that product cards now render and the complete user flow works
 
-### **Backlog & Progress:**
-```
-@/root/projects/prototype-flower-shop/docs/backlog/INDEX.md
-@/root/projects/prototype-flower-shop/docs/backlog/BACKLOG_CRITICAL.md
-@/root/projects/prototype-flower-shop/docs/completed/INDEX.md
-@/root/projects/prototype-flower-shop/docs/completed/PHASE_3_ADMIN_PANEL.md
-```
-
----
-
-## 🔴 Что нужно сделать дальше
-
-### **Критичные задачи (MVP)** - 11 задач, ~45 часов
-
-#### Приоритет 1: Email уведомления (TASK-1.2, 4 ч)
-- Настроить Laravel Mail
-- Создать Mailable классы (OrderConfirmed, NewOrderNotification, OrderStatusChanged)
-- Blade шаблоны писем
-- Queue для асинхронной отправки
-
-#### Приоритет 2: Завершить Checkout (TASK-1.3, 4 ч)
-**Статус**: Компоненты готовы, нужна интеграция
-- Объединить ContactStep, DeliveryStep, RecipientStep, PaymentStep в единый flow
-- Multi-step navigation с прогресс-баром
-- Validation и error handling
-- Очистка корзины после заказа
-
-#### Приоритет 3: Order Details Page (TASK-1.4, 2 ч)
-**Статус**: Success page готова, нужна details page
-- Страница `/order/[orderNumber]` с полной информацией
-- Детали доставки, товары, статус, история
-
-#### Приоритет 4: Личный кабинет (TASK-2.2 - 2.6, ~24 ч)
-- Update profile endpoint (backend)
-- Auth modal integration (частично готово)
-- Интеграция auth в навигацию
-- Страница профиля `/profile`
-- История заказов `/profile/orders`
-
-#### Приоритет 5: Admin доработки (TASK-3.5, TASK-3.7)
-- Admin order details page с timeline
-- Product create/edit forms с image upload
-- Category create/edit forms
-- Promo code create/edit forms
-
-### **Важные задачи (Production)** - 13 задач, ~50 часов
-- Дополнительные страницы (О компании, Доставка, Контакты)
-- Блог и новости
-- SEO оптимизация (sitemap, robots.txt, meta tags, structured data)
-
-### **Желательные задачи** - 11 задач, ~58 часов
-- Расширенные фильтры каталога
-- Отзывы на товарах (frontend компонент)
-- Интеграция ЮKassa
-- Performance оптимизация
-- Wishlist, сравнение товаров
-
-**Полный список**: `@/root/projects/prototype-flower-shop/docs/backlog/INDEX.md`
-
----
-
-## 🏗️ Архитектура проекта
-
-### Backend структура:
-```
-backend/
-├── app/
-│   ├── Models/ (12 моделей)
-│   ├── Http/
-│   │   ├── Controllers/
-│   │   │   ├── Api/ (публичные endpoints)
-│   │   │   └── Admin/ (admin endpoints)
-│   │   ├── Requests/ (Form Requests для валидации)
-│   │   ├── Resources/ (API Resources для форматирования)
-│   │   └── Middleware/ (IsAdmin)
-│   └── Services/ (OrderService)
-├── database/
-│   ├── migrations/ (12 таблиц)
-│   └── seeders/ (7 seeders)
-└── routes/api.php (50 endpoints)
-```
-
-### Frontend структура:
-```
-app/
-├── app/ (Next.js pages)
-│   ├── page.tsx (главная)
-│   ├── catalog/page.tsx
-│   ├── product/[id]/page.tsx
-│   ├── cart/page.tsx
-│   ├── checkout/page.tsx
-│   ├── order/[orderNumber]/page.tsx
-│   ├── profile/ (будет создано)
-│   └── admin/ (5 pages)
-│       ├── page.tsx (Dashboard)
-│       ├── orders/page.tsx
-│       ├── products/page.tsx
-│       ├── categories/page.tsx
-│       └── promo-codes/page.tsx
-├── components/
-│   ├── Navigation.tsx
-│   ├── ProductCard.tsx, QuantitySelector.tsx, PriceDisplay.tsx
-│   ├── ui/ (Button, Input, Select, Textarea, Skeleton)
-│   ├── checkout/ (6 компонентов)
-│   └── admin/ (AdminSidebar, AdminCard, DataTable, StatusBadge)
-├── lib/
-│   ├── types/ (10 type files)
-│   ├── api/ (7 API services)
-│   └── hooks/ (useProducts, useCategories, useAuth, useAdminStats)
-└── contexts/
-    └── CartContext.tsx
-```
-
----
-
-## ⚙️ Правила разработки
-
-### **Обязательно соблюдай:**
-
-1. **Модульность** (`@.claude/rules/07-modularity-components.md`):
-   - Каждый UI элемент, используемый 2+ раз → компонент
-   - Кнопки через `<Button variant="primary|secondary|ghost">`
-   - Цены через `<PriceDisplay price={} compareAtPrice={}/>`
-   - Типы централизованы в `lib/types/`
-
-2. **TypeScript** (`@.claude/rules/08-typescript-gotchas.md`):
-   - React Hook Form: watch() возвращает unknown → cast типы
-   - Nested fields: использовать FieldPath assertion
-   - PaginatedResponse определён в common.ts
-
-3. **Code Style**:
-   - Primary color: `pink-600`, `hover:bg-pink-700`
-   - Tailwind utility classes, NO CSS modules
-   - `"use client"` только для useState/handlers
-   - Все UI тексты на русском
-
-4. **Backend**:
-   - Валидация через Form Requests
-   - Eager loading для relationships
-   - Middleware для авторизации
-   - API Resources для форматирования
-
-### **Перед коммитом:**
 ```bash
+# Stop current server (if running)
+# Ctrl+C in the terminal with Next.js
+
 cd /root/projects/prototype-flower-shop/app
-npx tsc --noEmit  # Проверка типов
-pnpm build        # Production build
+pnpm dev
+
+# Check logs at /tmp/nextjs.log for any remaining errors
+```
+
+**Full Workflow to Test:**
+
+1. **Homepage (`/`)**
+   - ✅ Should see "Хиты продаж" section with product cards
+   - ✅ Should see "Новинки" section with product cards
+   - ✅ ProductCard components render correctly
+   - ✅ Images load (Unsplash)
+   - ✅ "Добавить в корзину" buttons work
+
+2. **Catalog (`/catalog`)**
+   - ✅ ProductCard grid displays (24 per page)
+   - ✅ Filters work (category, price range, sort)
+   - ✅ **NEW:** Advanced filters visible (Типы цветов, Цвета, Поводы)
+   - ✅ Filter accordion opens/closes
+   - ✅ Checkboxes update URL: `?flower_types=Роза,Пион`
+   - ✅ Pagination works
+   - ✅ Empty state if no results
+
+3. **Product Page (`/product/1`)**
+   - ✅ **CRITICAL:** Page loads without errors (just fixed params issue)
+   - ✅ ProductPageClient renders
+   - ✅ Product details display
+   - ✅ Images gallery works
+   - ✅ QuantitySelector works
+   - ✅ "Добавить в корзину" works
+   - ✅ Related products section
+
+4. **Cart (`/cart`)**
+   - ✅ Cart items display
+   - ✅ Quantity update/remove works
+   - ✅ Total calculation correct
+   - ✅ "Оформить заказ" button navigates to checkout
+
+5. **Checkout (`/checkout`)**
+   - ✅ Multi-step form (Contact → Delivery → Recipient → Payment)
+   - ✅ StepIndicator shows current step
+   - ✅ Validation works (Yup schema)
+   - ✅ "Далее" / "Назад" buttons work
+   - ✅ PromoCode input validates
+   - ✅ OrderSummary calculates correctly
+   - ✅ Order creation succeeds
+
+6. **Order Success (`/order/success?orderNumber=XXX`)**
+   - ✅ Success message displays
+   - ✅ Order number shown
+   - ✅ Link to order details works
+
+7. **Order Details (`/order/[orderNumber]`)**
+   - ✅ Order details display
+   - ✅ Items list with images
+   - ✅ Delivery info
+   - ✅ "Повторить заказ" button works
+
+8. **Content Pages (`/[slug]`)**
+   - ✅ Test: `/about-us`, `/delivery-info`, `/contacts`, `/care-tips`
+   - ✅ Dynamic content loads
+   - ✅ HTML content renders correctly
+   - ✅ Breadcrumbs work
+
+### 2. Check Logs for Errors
+
+```bash
+tail -n 50 /tmp/nextjs.log | grep -i "error\|failed\|params"
+```
+
+**What to Look For:**
+- ❌ No more "params is a Promise" errors
+- ❌ No "Failed to fetch product undefined" errors
+- ✅ Product pages compile successfully
+- ✅ API calls return 200 status
+
+### 3. Browser Console Check
+
+Open browser console (F12) and check for:
+- ❌ No hydration errors
+- ❌ No 404 errors for images
+- ❌ No JavaScript errors
+- ✅ All components render
+
+---
+
+## 📊 PROJECT STATUS
+
+**Overall Progress:** 94% (Phase 7 completed)
+
+### Completed Phases
+
+- ✅ Phase 0: Setup & Infrastructure (100%)
+- ✅ Phase 1: Backend API - Catalog (100%)
+- ✅ Phase 2: Frontend - Public Pages + Checkout (100%)
+- ✅ Phase 3: Admin Panel (100%)
+- ✅ Phase 4: Email Notifications (100%)
+- ✅ Phase 5: SEO Optimization (100%)
+- ✅ Phase 6: Content Pages (100%)
+- ✅ **Phase 7: Advanced Catalog Filters (100%)** ← Just completed
+
+### Remaining Tasks (from Backlog)
+
+**EPIC 8: Reviews System** (MEDIUM priority, ~12 hours)
+- Backend: Review CRUD, moderation, helpful/unhelpful votes
+- Frontend: ReviewForm, ReviewCard, StarRating components
+- Integration: Product page reviews section
+
+**EPIC 9: Payment Integration (ЮKassa)** (MEDIUM priority, ~8 hours)
+- Backend: Payment creation, webhook handling
+- Frontend: Payment redirect, status polling
+- Testing: Test mode integration
+
+**EPIC 10: Performance Optimization** (MEDIUM priority, ~10 hours)
+- Image optimization (AVIF/WebP)
+- Code splitting
+- Caching strategies
+- Lighthouse score optimization
+
+**EPIC 11: Additional Features** (LOW priority, ~15 hours)
+- Wishlist
+- Product comparison
+- Gift certificates
+- Subscription to new products
+
+---
+
+## 🗂️ KEY FILES REFERENCE
+
+### Backend (Laravel)
+- **Controllers:** `backend/app/Http/Controllers/Api/ProductController.php`
+  - Line 33-64: Filter logic (OR, not AND)
+  - Line 123-153: `availableFilters()` method with caching
+- **Routes:** `backend/routes/api.php`
+  - Line 30: `GET /products/filters` endpoint
+
+### Frontend (Next.js)
+
+**Components:**
+- `app/components/catalog/CheckboxFilter.tsx` (NEW)
+- `app/components/catalog/FilterGroup.tsx` (NEW)
+- `app/components/catalog/FiltersSkeleton.tsx` (NEW)
+- `app/components/ProductCard.tsx`
+- `app/components/product/ProductPageClient.tsx`
+
+**Pages:**
+- `app/app/product/[id]/page.tsx` ← **Just fixed params Promise**
+- `app/app/catalog/page.tsx` ← Integrated new filters
+- `app/app/[slug]/page.tsx` ← Already correct
+- `app/app/order/[orderNumber]/page.tsx` ← Already correct
+
+**Types & API:**
+- `app/lib/types/product.ts` ← Added `AvailableFilters` interface
+- `app/lib/api/products.ts` ← Added `getAvailableFilters()` method
+- `app/lib/hooks/useProducts.ts` ← Added `useAvailableFilters()` hook
+
+**Config:**
+- `app/app/layout.tsx` ← Added `suppressHydrationWarning` to body
+- `app/next.config.ts` ← Added `remotePatterns` for Unsplash
+
+---
+
+## 🚀 HOW TO USE THIS PROMPT
+
+### Option 1: Quick Verification (Recommended)
+```
+Continue from previous session. The Next.js 16 params Promise issue in
+app/product/[id]/page.tsx has been fixed. Please:
+
+1. Restart the Next.js dev server
+2. Verify product cards appear on homepage and catalog
+3. Test the full workflow: Homepage → Catalog → Product Page → Add to Cart
+   → Checkout → Order Success
+4. Check browser console and server logs for any errors
+5. Report any issues found
+
+Context: @docs/CONTINUATION_PROMPT.md
+```
+
+### Option 2: Deep Dive
+```
+I'm continuing work on the Flower Shop e-commerce project (Next.js 16 + Laravel 11).
+
+Context: We just completed EPIC 7 (Advanced Catalog Filters) and fixed a Next.js 16
+breaking change where params in dynamic routes became a Promise. The fix was applied
+to app/product/[id]/page.tsx.
+
+Full context in: @docs/CONTINUATION_PROMPT.md
+
+Please verify:
+1. Product cards render correctly on all pages
+2. Product detail pages load without errors
+3. Complete checkout flow works end-to-end
+4. All console/server errors resolved
+
+Then advise on next priority: EPIC 8 (Reviews) or EPIC 9 (ЮKassa Payment)?
+```
+
+### Option 3: Jump to Next EPIC
+```
+@docs/CONTINUATION_PROMPT.md
+
+I want to implement EPIC 8: Reviews System. Before starting, verify that
+the previous fixes (params Promise in product pages) are working correctly.
+
+Then proceed with planning EPIC 8 implementation following the same
+production-ready standards as previous phases.
 ```
 
 ---
 
-## 🚦 Workflow для новой задачи
+## 📖 DOCUMENTATION REFERENCES
 
-1. **Прочитай требования** из `@docs/backlog/BACKLOG_CRITICAL.md`
-2. **Проверь существующий код**:
-   - Backend: `backend/app/Http/Controllers/`
-   - Frontend: `app/app/`, `app/components/`, `app/lib/`
-3. **Создай файлы** согласно архитектуре
-4. **Используй существующие компоненты**:
-   - Button, Input, Select, Textarea (UI)
-   - ProductCard, PriceDisplay, QuantitySelector
-   - DataTable, StatusBadge (Admin)
-5. **Проверь типы**: `npx tsc --noEmit`
-6. **Build**: `pnpm build`
-7. **Документируй**: Обнови `docs/completed/` если фаза завершена
+- **Project Guide:** `/root/projects/prototype-flower-shop/CLAUDE.md`
+- **API Spec:** `/root/projects/prototype-flower-shop/docs/api/NAVIGATION.md`
+- **Database:** `/root/projects/prototype-flower-shop/docs/database/DATABASE_INDEX.md`
+- **Backlog:** `/root/projects/prototype-flower-shop/docs/backlog/INDEX.md`
+- **Completed:** `/root/projects/prototype-flower-shop/docs/completed/INDEX.md`
+- **Phase 7 Details:** `/root/projects/prototype-flower-shop/docs/completed/PHASE_7_ADVANCED_FILTERS.md`
 
 ---
 
-## 📊 Текущие метрики
+## ⚠️ KNOWN ISSUES & GOTCHAS
 
-- **Backend**: ~1,900 строк PHP (11 контроллеров, 12 requests, 1 middleware)
-- **Frontend**: ~5,000 строк TypeScript/TSX (23 компонента, 11 страниц)
-- **Database**: 12 таблиц, 7 seeders
-- **API**: 50 endpoints (30 публичных + 20 admin)
+### Next.js 16 Specific
+- ✅ **FIXED:** params as Promise in dynamic routes (must await)
+- Images require remotePatterns configuration (no deprecated `domains`)
+- useSearchParams requires Suspense boundary
 
----
+### TypeScript
+- React Hook Form + Yup: requires `as any` cast for resolver
+- watch() returns unknown, needs type assertion
+- Nested fields need FieldPath assertion
 
-## 🎯 Моя текущая задача
+### Browser Extensions
+- React DevTools adds `__processed__` attribute to body → use suppressHydrationWarning
 
-**[Укажи здесь конкретную задачу, над которой работаешь]**
-
-Например:
-- Я хочу реализовать TASK-1.2: Email уведомления
-- Я хочу завершить checkout integration (TASK-1.3)
-- Я хочу создать страницу профиля (TASK-2.5)
-- Я хочу добавить admin order details page (TASK-3.5)
-
----
-
-## 📝 Вопросы для Claude
-
-После загрузки контекста, задай мне следующие вопросы (если нужно уточнение):
-
-1. С какой задачи из бэклога начать?
-2. Нужно ли придерживаться какого-то конкретного подхода?
-3. Есть ли предпочтения по технологиям (например, для email: Mailgun vs SMTP)?
+### API Response Formats
+- Backend uses snake_case: `average_rating`, `reviews_count`, `compare_at_price`
+- Frontend types must match exactly (don't convert to camelCase)
 
 ---
 
-## ✅ Checklist перед стартом
+## 🎨 DESIGN SYSTEM
 
-- [ ] Прочитал `@CLAUDE.md`
-- [ ] Ознакомился с `@docs/api/NAVIGATION.md`
-- [ ] Изучил `@docs/backlog/BACKLOG_CRITICAL.md`
-- [ ] Посмотрел существующий код в `backend/app/` и `app/`
-- [ ] Понял архитектуру проекта
-- [ ] Готов к работе с соблюдением правил модульности и TypeScript
+- **Primary Color:** `pink-600` (hover: `pink-700`)
+- **Touch Targets:** Minimum 44px for mobile
+- **Typography:** Inter font with Cyrillic support
+- **Spacing:** Tailwind default scale (4, 6, 8, 12, 16, etc.)
+- **Corners:** `rounded-2xl` for cards, `rounded-lg` for inputs
+- **Shadows:** `shadow-lg` for cards, `shadow-sm` for inputs
 
 ---
 
-## 💡 ШАБЛОН ПРОМПТА ДЛЯ НОВОГО ЧАТА
+## 🧪 VERIFICATION COMMANDS
 
-Скопируй и вставь в новый чат:
+```bash
+# Frontend type check
+cd /root/projects/prototype-flower-shop/app
+npx tsc --noEmit
 
-```
-Привет! Я продолжаю разработку интернет-магазина цветов.
+# Frontend production build
+pnpm build
 
-**Проект**: /root/projects/prototype-flower-shop
-**Стек**: Next.js 16 + React 19 + TypeScript + Laravel 11 + PostgreSQL 16
-**Прогресс**: 78% завершено (4.7 из 6 фаз)
+# Backend tests (if available)
+cd /root/projects/prototype-flower-shop/backend
+php artisan test
 
-**Последняя завершенная фаза**: Админ-панель MVP (Dashboard, Orders, Products, Categories, Promo Codes)
-
-**Ключевые документы для чтения**:
-- @/root/projects/prototype-flower-shop/CLAUDE.md (основные правила)
-- @/root/projects/prototype-flower-shop/docs/backlog/BACKLOG_CRITICAL.md (задачи)
-- @/root/projects/prototype-flower-shop/docs/completed/PHASE_3_ADMIN_PANEL.md (что сделано)
-- @/root/projects/prototype-flower-shop/docs/api/NAVIGATION.md (API)
-
-**Моя следующая задача**: [УКАЖИ ЗДЕСЬ ЗАДАЧУ]
-
-Например:
-- Реализовать Email уведомления (TASK-1.2)
-- Завершить checkout integration (TASK-1.3)
-- Создать страницу профиля (TASK-2.5)
-- Добавить admin order details page (TASK-3.5)
-
-**Важные правила**:
-- Соблюдай модульность (@.claude/rules/07-modularity-components.md)
-- Следи за TypeScript gotchas (@.claude/rules/08-typescript-gotchas.md)
-- Используй существующие компоненты (Button, Input, Select, DataTable)
-- Primary color: pink-600
-- Всё на русском языке
-
-**Перед началом**:
-1. Прочитай требования задачи из BACKLOG_CRITICAL.md
-2. Проверь существующий код (backend/app/, app/)
-3. Создай файлы согласно архитектуре
-4. Проверь типы: npx tsc --noEmit
-5. Build: pnpm build
-
-Начинай!
+# Check server logs
+tail -f /tmp/nextjs.log
+tail -f /root/projects/prototype-flower-shop/backend/storage/logs/laravel.log
 ```
 
 ---
 
-**Версия**: 2.0
-**Дата создания**: 28 января 2026
-**Последнее обновление**: 28 января 2026 (вечер)
-**Автор**: AI Assistant (Claude Sonnet 4.5)
+## 💡 TIPS FOR CONTINUING
+
+1. **Always check logs first** - Many issues are visible in /tmp/nextjs.log
+2. **Restart dev server** after config changes (next.config.ts, .env)
+3. **Clear browser cache** if seeing stale data or old errors
+4. **Test mobile view** - Use Chrome DevTools responsive mode
+5. **Check network tab** - Verify API calls return 200 status
+6. **Use TypeScript** - Run `npx tsc --noEmit` before committing
+7. **Production build** - Run `pnpm build` to catch build-time errors
+
+---
+
+**Last Updated:** 29 января 2026, 23:45
+**Next Session Start:** Continue with verification of product pages and workflow testing

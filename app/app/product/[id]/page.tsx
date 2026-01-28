@@ -12,14 +12,15 @@ import { StructuredData } from '@/components/StructuredData';
 import { ProductPageClient } from '@/components/product/ProductPageClient';
 
 type Props = {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 };
 
 /**
  * Генерация метаданных для страницы товара
  */
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const productData = await fetchProduct(params.id);
+  const { id } = await params;
+  const productData = await fetchProduct(id);
 
   if (!productData?.product) {
     return {
@@ -34,7 +35,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
  * Страница товара (серверный компонент)
  */
 export default async function ProductPage({ params }: Props) {
-  const productData = await fetchProduct(params.id);
+  const { id } = await params;
+  const productData = await fetchProduct(id);
 
   if (!productData?.product) {
     notFound();
@@ -69,7 +71,7 @@ export default async function ProductPage({ params }: Props) {
     <>
       <StructuredData data={structuredData} />
       <main className="min-h-screen bg-gray-50">
-        <ProductPageClient productId={params.id} />
+        <ProductPageClient productId={id} />
       </main>
     </>
   );

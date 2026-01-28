@@ -21,8 +21,13 @@ export async function fetchProduct(id: string | number): Promise<ProductWithRela
       return null;
     }
 
-    const data = await response.json();
-    return data;
+    const apiResponse = await response.json();
+
+    // Transform API response to ProductWithRelated format
+    return {
+      product: apiResponse.data,
+      related_products: apiResponse.related_products || [],
+    };
   } catch (error) {
     console.error(`Error fetching product ${id}:`, error);
     return null;
@@ -43,8 +48,8 @@ export async function fetchCategory(idOrSlug: string | number) {
       return null;
     }
 
-    const data = await response.json();
-    return data;
+    const apiResponse = await response.json();
+    return apiResponse.data; // Extract data from API response
   } catch (error) {
     console.error(`Error fetching category ${idOrSlug}:`, error);
     return null;
@@ -74,8 +79,9 @@ export async function fetchProducts(filters?: Record<string, any>) {
       return null;
     }
 
-    const data = await response.json();
-    return data;
+    const apiResponse = await response.json();
+    // Products API returns paginated data, keep original structure
+    return apiResponse;
   } catch (error) {
     console.error('Error fetching products:', error);
     return null;
@@ -96,8 +102,8 @@ export async function fetchPage(slug: string) {
       return null;
     }
 
-    const data = await response.json();
-    return data;
+    const apiResponse = await response.json();
+    return apiResponse.data; // Extract data from API response
   } catch (error) {
     console.error(`Error fetching page ${slug}:`, error);
     return null;
@@ -117,8 +123,8 @@ export async function fetchBlogPost(slug: string) {
       return null;
     }
 
-    const data = await response.json();
-    return data;
+    const apiResponse = await response.json();
+    return apiResponse.data; // Extract data from API response
   } catch (error) {
     console.error(`Error fetching blog post ${slug}:`, error);
     return null;

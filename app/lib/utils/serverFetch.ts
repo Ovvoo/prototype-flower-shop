@@ -4,6 +4,7 @@
  */
 
 import type { Product, ProductWithRelated } from '@/lib/types';
+import { isDemoMode, getMockResponse } from '@/lib/mock/handler';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 
@@ -11,9 +12,15 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
  * Получить товар по ID (server-side)
  */
 export async function fetchProduct(id: string | number): Promise<ProductWithRelated | null> {
+  if (isDemoMode()) {
+    const mock = getMockResponse(`/products/${id}`) as { data: Product; related_products: Product[] } | null;
+    if (!mock) return null;
+    return { product: mock.data, related_products: mock.related_products || [] };
+  }
+
   try {
     const response = await fetch(`${API_URL}/products/${id}`, {
-      cache: 'no-store', // Всегда свежие данные для SSR
+      cache: 'no-store',
     });
 
     if (!response.ok) {
@@ -23,7 +30,6 @@ export async function fetchProduct(id: string | number): Promise<ProductWithRela
 
     const apiResponse = await response.json();
 
-    // Transform API response to ProductWithRelated format
     return {
       product: apiResponse.data,
       related_products: apiResponse.related_products || [],
@@ -38,10 +44,15 @@ export async function fetchProduct(id: string | number): Promise<ProductWithRela
  * Получить категорию по ID или slug (server-side)
  */
 export async function fetchCategory(idOrSlug: string | number) {
+  if (isDemoMode()) {
+    const mock = getMockResponse(`/categories/${idOrSlug}`) as { data: any } | null;
+    return mock?.data || null;
+  }
+
   try {
     const response = await fetch(`${API_URL}/categories/${idOrSlug}`, {
-      cache: 'force-cache', // Кэшируем категории
-      next: { revalidate: 3600 }, // Обновляем раз в час
+      cache: 'force-cache',
+      next: { revalidate: 3600 },
     });
 
     if (!response.ok) {
@@ -49,7 +60,7 @@ export async function fetchCategory(idOrSlug: string | number) {
     }
 
     const apiResponse = await response.json();
-    return apiResponse.data; // Extract data from API response
+    return apiResponse.data;
   } catch (error) {
     console.error(`Error fetching category ${idOrSlug}:`, error);
     return null;
@@ -60,6 +71,10 @@ export async function fetchCategory(idOrSlug: string | number) {
  * Получить список товаров (server-side)
  */
 export async function fetchProducts(filters?: Record<string, any>) {
+  if (isDemoMode()) {
+    return getMockResponse('/products', filters);
+  }
+
   try {
     const params = new URLSearchParams();
     if (filters) {
@@ -80,7 +95,6 @@ export async function fetchProducts(filters?: Record<string, any>) {
     }
 
     const apiResponse = await response.json();
-    // Products API returns paginated data, keep original structure
     return apiResponse;
   } catch (error) {
     console.error('Error fetching products:', error);
@@ -92,10 +106,15 @@ export async function fetchProducts(filters?: Record<string, any>) {
  * Получить страницу контента по slug (server-side)
  */
 export async function fetchPage(slug: string) {
+  if (isDemoMode()) {
+    const mock = getMockResponse(`/pages/${slug}`) as { data: any } | null;
+    return mock?.data || null;
+  }
+
   try {
     const response = await fetch(`${API_URL}/pages/${slug}`, {
       cache: 'force-cache',
-      next: { revalidate: 3600 }, // Обновляем раз в час
+      next: { revalidate: 3600 },
     });
 
     if (!response.ok) {
@@ -103,7 +122,7 @@ export async function fetchPage(slug: string) {
     }
 
     const apiResponse = await response.json();
-    return apiResponse.data; // Extract data from API response
+    return apiResponse.data;
   } catch (error) {
     console.error(`Error fetching page ${slug}:`, error);
     return null;
@@ -124,7 +143,7 @@ export async function fetchBlogPost(slug: string) {
     }
 
     const apiResponse = await response.json();
-    return apiResponse.data; // Extract data from API response
+    return apiResponse.data;
   } catch (error) {
     console.error(`Error fetching blog post ${slug}:`, error);
     return null;

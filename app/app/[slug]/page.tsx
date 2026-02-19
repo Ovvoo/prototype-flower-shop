@@ -10,6 +10,8 @@ import { generatePageMetadata } from '@/lib/utils/metadata';
 import { generateBreadcrumbSchema } from '@/lib/utils/structuredData';
 import { StructuredData } from '@/components/StructuredData';
 
+import { isDemoMode, getMockResponse } from '@/lib/mock/handler';
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 
 interface Page {
@@ -23,9 +25,14 @@ interface Page {
 }
 
 async function fetchPage(slug: string): Promise<Page | null> {
+  if (isDemoMode()) {
+    const mock = getMockResponse(`/pages/${slug}`) as { data: Page } | null;
+    return mock?.data || null;
+  }
+
   try {
     const response = await fetch(`${API_URL}/pages/${slug}`, {
-      next: { revalidate: 3600 }, // Revalidate каждый час
+      next: { revalidate: 3600 },
     });
 
     if (!response.ok) {

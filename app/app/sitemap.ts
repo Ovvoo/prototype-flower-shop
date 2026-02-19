@@ -4,6 +4,7 @@
  */
 
 import { MetadataRoute } from 'next';
+import { isDemoMode, getMockResponse } from '@/lib/mock/handler';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://flowershop.ru';
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
@@ -12,9 +13,14 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
  * Получить все товары для sitemap
  */
 async function fetchProductsForSitemap() {
+  if (isDemoMode()) {
+    const mock = getMockResponse('/products', { per_page: 1000 }) as { data: any[] } | null;
+    return mock?.data || [];
+  }
+
   try {
     const response = await fetch(`${API_URL}/products?per_page=1000`, {
-      next: { revalidate: 3600 }, // Обновляем раз в час
+      next: { revalidate: 3600 },
     });
 
     if (!response.ok) return [];
@@ -31,6 +37,11 @@ async function fetchProductsForSitemap() {
  * Получить все категории для sitemap
  */
 async function fetchCategoriesForSitemap() {
+  if (isDemoMode()) {
+    const mock = getMockResponse('/categories') as { data: any[] } | null;
+    return mock?.data || [];
+  }
+
   try {
     const response = await fetch(`${API_URL}/categories`, {
       next: { revalidate: 3600 },
@@ -60,7 +71,6 @@ async function fetchBlogPostsForSitemap() {
     const data = await response.json();
     return data.data || [];
   } catch (error) {
-    // Блог может быть не реализован
     return [];
   }
 }
@@ -69,6 +79,11 @@ async function fetchBlogPostsForSitemap() {
  * Получить все страницы контента для sitemap
  */
 async function fetchPagesForSitemap() {
+  if (isDemoMode()) {
+    const mock = getMockResponse('/pages') as { data: any[] } | null;
+    return mock?.data || [];
+  }
+
   try {
     const response = await fetch(`${API_URL}/pages`, {
       next: { revalidate: 3600 },
@@ -79,7 +94,6 @@ async function fetchPagesForSitemap() {
     const data = await response.json();
     return data.data || [];
   } catch (error) {
-    // Страницы могут быть не реализованы
     return [];
   }
 }

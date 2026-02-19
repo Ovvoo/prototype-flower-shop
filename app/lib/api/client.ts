@@ -72,6 +72,15 @@ class ApiClient {
     endpoint: string,
     config: RequestConfig = {}
   ): Promise<T> {
+    // Demo mode — return mock data without network request
+    if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') {
+      const { getMockResponse } = await import('@/lib/mock/handler');
+      const mockData = getMockResponse(endpoint, config.params);
+      if (mockData !== null) {
+        return mockData as T;
+      }
+    }
+
     const { params, ...fetchConfig } = config;
     const url = this.buildURL(endpoint, params);
 

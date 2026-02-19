@@ -31,7 +31,11 @@ export const adminApi = {
    * Get filtered list of orders
    */
   async getOrders(filters?: AdminOrderFilters): Promise<PaginatedResponse<Order>> {
-    return apiClient.get<PaginatedResponse<Order>>('/admin/orders', filters)
+    const raw = await apiClient.get<any>('/admin/orders', filters)
+    return {
+      ...raw,
+      meta: { current_page: raw.current_page, last_page: raw.last_page, per_page: raw.per_page, total: raw.total, from: raw.from ?? 0, to: raw.to ?? 0 },
+    }
   },
 
   /**
@@ -58,7 +62,11 @@ export const adminApi = {
    * Get filtered list of products
    */
   async getProducts(filters?: AdminProductFilters): Promise<PaginatedResponse<Product>> {
-    return apiClient.get<PaginatedResponse<Product>>('/admin/products', filters)
+    const raw = await apiClient.get<any>('/admin/products', filters)
+    return {
+      ...raw,
+      meta: { current_page: raw.current_page, last_page: raw.last_page, per_page: raw.per_page, total: raw.total, from: raw.from ?? 0, to: raw.to ?? 0 },
+    }
   },
 
   /**
@@ -148,7 +156,11 @@ export const adminApi = {
    * Get list of promo codes
    */
   async getPromoCodes(filters?: AdminPromoCodeFilters): Promise<PaginatedResponse<PromoCode>> {
-    return apiClient.get<PaginatedResponse<PromoCode>>('/admin/promo-codes', filters)
+    const raw = await apiClient.get<any>('/admin/promo-codes', filters)
+    return {
+      ...raw,
+      meta: { current_page: raw.current_page, last_page: raw.last_page, per_page: raw.per_page, total: raw.total, from: raw.from ?? 0, to: raw.to ?? 0 },
+    }
   },
 
   /**

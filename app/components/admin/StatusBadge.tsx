@@ -6,12 +6,12 @@ interface StatusBadgeProps {
 }
 
 const statusColors = {
-  // Order statuses
+  // Order statuses (matching backend: new/confirmed/preparing/delivering/completed/cancelled)
   new: 'bg-blue-100 text-blue-800',
-  confirmed: 'bg-green-100 text-green-800',
-  processing: 'bg-yellow-100 text-yellow-800',
-  shipped: 'bg-purple-100 text-purple-800',
-  delivered: 'bg-green-100 text-green-800',
+  confirmed: 'bg-indigo-100 text-indigo-800',
+  preparing: 'bg-yellow-100 text-yellow-800',
+  delivering: 'bg-purple-100 text-purple-800',
+  completed: 'bg-green-100 text-green-800',
   cancelled: 'bg-red-100 text-red-800',
 
   // Payment statuses
@@ -30,9 +30,9 @@ const statusLabels: Record<string, string> = {
   // Order
   new: 'Новый',
   confirmed: 'Подтверждён',
-  processing: 'Обработка',
-  shipped: 'Доставляется',
-  delivered: 'Доставлен',
+  preparing: 'Готовится',
+  delivering: 'Доставляется',
+  completed: 'Выполнен',
   cancelled: 'Отменён',
 
   // Payment

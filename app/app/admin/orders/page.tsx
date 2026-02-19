@@ -137,9 +137,9 @@ export default function AdminOrdersPage() {
             <option value="">Все статусы</option>
             <option value="new">Новый</option>
             <option value="confirmed">Подтверждён</option>
-            <option value="processing">Обработка</option>
-            <option value="shipped">Доставляется</option>
-            <option value="delivered">Доставлен</option>
+            <option value="preparing">Готовится</option>
+            <option value="delivering">Доставляется</option>
+            <option value="completed">Выполнен</option>
             <option value="cancelled">Отменён</option>
           </Select>
 

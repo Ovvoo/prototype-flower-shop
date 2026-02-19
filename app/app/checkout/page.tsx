@@ -25,6 +25,7 @@ export default function CheckoutPage() {
     form,
     handleSubmit,
     isSubmitting,
+    submitError,
     currentStep,
     goToNextStep,
     goToPreviousStep,
@@ -87,6 +88,13 @@ export default function CheckoutPage() {
 
               {/* Step 4: Payment */}
               {currentStep === 4 && <PaymentMethodSelector form={form} />}
+
+              {/* Ошибка оформления заказа */}
+              {submitError && (
+                <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                  {submitError}
+                </div>
+              )}
 
               {/* Navigation Buttons */}
               <div className="flex gap-4">

@@ -67,6 +67,7 @@ export function useCheckoutForm() {
   const { items, promoCode, clearCart } = useCartContext()
   const [currentStep, setCurrentStep] = useState<CheckoutStep>(1)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
   // React Hook Form
   const form = useForm<CheckoutFormValues>({
@@ -172,6 +173,8 @@ export function useCheckoutForm() {
     async (data: CheckoutFormValues): Promise<void> => {
       setIsSubmitting(true)
 
+      setSubmitError(null)
+
       try {
         // Подготовить данные заказа
         const orderRequest: CreateOrderRequest = {
@@ -203,7 +206,11 @@ export function useCheckoutForm() {
         router.push(`/order/${response.order.order_number}`)
       } catch (error) {
         console.error('Failed to create order:', error)
-        throw error
+        const message =
+          error && typeof error === 'object' && 'message' in error
+            ? (error as { message: string }).message
+            : 'Ошибка при оформлении заказа. Попробуйте ещё раз.'
+        setSubmitError(message)
       } finally {
         setIsSubmitting(false)
       }
@@ -223,6 +230,7 @@ export function useCheckoutForm() {
     form,
     handleSubmit,
     isSubmitting,
+    submitError,
 
     // Step navigation
     currentStep,

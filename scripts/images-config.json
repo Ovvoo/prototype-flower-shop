@@ -1,0 +1,322 @@
+{
+  "_comment": "Единый источник правды для изображений продуктов. Используется: bash-скриптом download-images.sh и PHP-командой images:download",
+  "_unsplash_url": "https://images.unsplash.com/{id}?w=1200&h=1200&fit=crop&auto=format&q=82",
+  "_local_path": "app/public/images/products/",
+  "products": [
+    {
+      "slug": "buket-25-krasnyh-roz",
+      "images": [
+        {
+          "id": "photo-1518709268805-4e9042af9f23",
+          "file": "buket-25-krasnyh-roz-1.webp"
+        },
+        {
+          "id": "photo-1582794543139-8ac9cb0f7b11",
+          "file": "buket-25-krasnyh-roz-2.webp"
+        }
+      ]
+    },
+    {
+      "slug": "buket-miks-iz-51-rozy",
+      "images": [
+        {
+          "id": "photo-1563241527-3004b7be0ffd",
+          "file": "buket-miks-iz-51-rozy-1.webp"
+        },
+        {
+          "id": "photo-1462275646964-a0e3386b89fa",
+          "file": "buket-miks-iz-51-rozy-2.webp"
+        }
+      ]
+    },
+    {
+      "slug": "buket-nezhnost-belye-rozy",
+      "images": [
+        {
+          "id": "photo-1591886960571-74d43a9d4166",
+          "file": "buket-nezhnost-belye-rozy-1.webp"
+        },
+        {
+          "id": "photo-1508610048659-a06b669e3321",
+          "file": "buket-nezhnost-belye-rozy-2.webp"
+        }
+      ]
+    },
+    {
+      "slug": "buket-11-rozovyh-roz",
+      "images": [
+        {
+          "id": "photo-1526047932273-341f2a7631f9",
+          "file": "buket-11-rozovyh-roz-1.webp"
+        }
+      ]
+    },
+    {
+      "slug": "buket-101-roza-priznaniye",
+      "images": [
+        {
+          "id": "photo-1462275646964-a0e3386b89fa",
+          "file": "buket-101-roza-priznaniye-1.webp"
+        },
+        {
+          "id": "photo-1518709268805-4e9042af9f23",
+          "file": "buket-101-roza-priznaniye-2.webp"
+        }
+      ]
+    },
+    {
+      "slug": "buket-pionovoe-oblako",
+      "images": [
+        {
+          "id": "photo-1465146344425-f00d5f5c8f07",
+          "file": "buket-pionovoe-oblako-1.webp"
+        }
+      ]
+    },
+    {
+      "slug": "buket-korallovye-piony",
+      "images": [
+        {
+          "id": "photo-1526047932273-341f2a7631f9",
+          "file": "buket-korallovye-piony-1.webp"
+        },
+        {
+          "id": "photo-1461354464878-ad92f492a5a0",
+          "file": "buket-korallovye-piony-2.webp"
+        }
+      ]
+    },
+    {
+      "slug": "buket-belye-piony-elegiya",
+      "images": [
+        {
+          "id": "photo-1461354464878-ad92f492a5a0",
+          "file": "buket-belye-piony-elegiya-1.webp"
+        },
+        {
+          "id": "photo-1508610048659-a06b669e3321",
+          "file": "buket-belye-piony-elegiya-2.webp"
+        }
+      ]
+    },
+    {
+      "slug": "buket-vesennij-miks-tyulpany",
+      "images": [
+        {
+          "id": "photo-1520763185298-1b434c919102",
+          "file": "buket-vesennij-miks-tyulpany-1.webp"
+        }
+      ]
+    },
+    {
+      "slug": "buket-belye-tyulpany",
+      "images": [
+        {
+          "id": "photo-1490750967868-88aa4486c946",
+          "file": "buket-belye-tyulpany-1.webp"
+        }
+      ]
+    },
+    {
+      "slug": "buket-krasnye-tyulpany",
+      "images": [
+        {
+          "id": "photo-1468327768560-75b778cbb551",
+          "file": "buket-krasnye-tyulpany-1.webp"
+        },
+        {
+          "id": "photo-1520763185298-1b434c919102",
+          "file": "buket-krasnye-tyulpany-2.webp"
+        }
+      ]
+    },
+    {
+      "slug": "buket-letnij-sad",
+      "images": [
+        {
+          "id": "photo-1487070183336-b863922373d4",
+          "file": "buket-letnij-sad-1.webp"
+        },
+        {
+          "id": "photo-1464226184884-fa280b87c399",
+          "file": "buket-letnij-sad-2.webp"
+        }
+      ]
+    },
+    {
+      "slug": "buket-raduga-emocij",
+      "images": [
+        {
+          "id": "photo-1444021465936-c6ca81d39b84",
+          "file": "buket-raduga-emocij-1.webp"
+        }
+      ]
+    },
+    {
+      "slug": "buket-frantsuzskiy-sad",
+      "images": [
+        {
+          "id": "photo-1464226184884-fa280b87c399",
+          "file": "buket-frantsuzskiy-sad-1.webp"
+        },
+        {
+          "id": "photo-1461354464878-ad92f492a5a0",
+          "file": "buket-frantsuzskiy-sad-2.webp"
+        }
+      ]
+    },
+    {
+      "slug": "buket-nezhnost-leta",
+      "images": [
+        {
+          "id": "photo-1526047932273-341f2a7631f9",
+          "file": "buket-nezhnost-leta-1.webp"
+        },
+        {
+          "id": "photo-1428954376791-d9ae785dfb2d",
+          "file": "buket-nezhnost-leta-2.webp"
+        }
+      ]
+    },
+    {
+      "slug": "orhideya-belyy-falenopsis",
+      "images": [
+        {
+          "id": "photo-1515150144380-bca9f1650ed9",
+          "file": "orhideya-belyy-falenopsis-1.webp"
+        }
+      ]
+    },
+    {
+      "slug": "orhideya-rozovaya-kaskad",
+      "images": [
+        {
+          "id": "photo-1599598425947-5202edd56bdb",
+          "file": "orhideya-rozovaya-kaskad-1.webp"
+        }
+      ]
+    },
+    {
+      "slug": "sukkulenty-assortiment-sad",
+      "images": [
+        {
+          "id": "photo-1520412099551-62b6bafeb5bb",
+          "file": "sukkulenty-assortiment-sad-1.webp"
+        },
+        {
+          "id": "photo-1481833761820-0509d3217039",
+          "file": "sukkulenty-assortiment-sad-2.webp"
+        }
+      ]
+    },
+    {
+      "slug": "sukkulenty-v-gorshke-trio",
+      "images": [
+        {
+          "id": "photo-1481833761820-0509d3217039",
+          "file": "sukkulenty-v-gorshke-trio-1.webp"
+        }
+      ]
+    },
+    {
+      "slug": "shlyapnaya-korobka-romans",
+      "images": [
+        {
+          "id": "photo-1414235077428-338989a2e8c0",
+          "file": "shlyapnaya-korobka-romans-1.webp"
+        },
+        {
+          "id": "photo-1553361371-9b22f78e8b1d",
+          "file": "shlyapnaya-korobka-romans-2.webp"
+        }
+      ]
+    },
+    {
+      "slug": "korobka-pastelnyj-son",
+      "images": [
+        {
+          "id": "photo-1553361371-9b22f78e8b1d",
+          "file": "korobka-pastelnyj-son-1.webp"
+        },
+        {
+          "id": "photo-1512621776951-a57141f2eefd",
+          "file": "korobka-pastelnyj-son-2.webp"
+        }
+      ]
+    },
+    {
+      "slug": "mega-boks-rozy-premium",
+      "images": [
+        {
+          "id": "photo-1512621776951-a57141f2eefd",
+          "file": "mega-boks-rozy-premium-1.webp"
+        },
+        {
+          "id": "photo-1560717789-0ac7c58ac90a",
+          "file": "mega-boks-rozy-premium-2.webp"
+        }
+      ]
+    },
+    {
+      "slug": "korzina-polevye-tsvety",
+      "images": [
+        {
+          "id": "photo-1464226184884-fa280b87c399",
+          "file": "korzina-polevye-tsvety-1.webp"
+        },
+        {
+          "id": "photo-1487070183336-b863922373d4",
+          "file": "korzina-polevye-tsvety-2.webp"
+        }
+      ]
+    },
+    {
+      "slug": "korzina-roskoshnaya-premium",
+      "images": [
+        {
+          "id": "photo-1444021465936-c6ca81d39b84",
+          "file": "korzina-roskoshnaya-premium-1.webp"
+        },
+        {
+          "id": "photo-1462275646964-a0e3386b89fa",
+          "file": "korzina-roskoshnaya-premium-2.webp"
+        }
+      ]
+    },
+    {
+      "slug": "buket-nevesty-klassika",
+      "images": [
+        {
+          "id": "photo-1519225421980-715cb0215aed",
+          "file": "buket-nevesty-klassika-1.webp"
+        },
+        {
+          "id": "photo-1511285560929-80b456fea0bc",
+          "file": "buket-nevesty-klassika-2.webp"
+        }
+      ]
+    },
+    {
+      "slug": "buket-nevesty-romantico",
+      "images": [
+        {
+          "id": "photo-1511285560929-80b456fea0bc",
+          "file": "buket-nevesty-romantico-1.webp"
+        },
+        {
+          "id": "photo-1591886960571-74d43a9d4166",
+          "file": "buket-nevesty-romantico-2.webp"
+        }
+      ]
+    },
+    {
+      "slug": "svadebnaya-kompoziciya-stol",
+      "images": [
+        {
+          "id": "photo-1519225421980-715cb0215aed",
+          "file": "svadebnaya-kompoziciya-stol-1.webp"
+        }
+      ]
+    }
+  ]
+}

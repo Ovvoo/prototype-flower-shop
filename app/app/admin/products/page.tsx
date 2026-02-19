@@ -16,6 +16,7 @@ import Image from 'next/image'
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<PaginatedResponse<Product> | null>(null)
   const [loading, setLoading] = useState(true)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
   const [filters, setFilters] = useState<AdminProductFilters>({
     page: 1,
   })
@@ -52,13 +53,13 @@ export default function AdminProductsPage() {
 
   const handleDelete = async (id: number) => {
     if (!confirm('Удалить товар?')) return
+    setDeleteError(null)
 
     try {
       await adminApi.deleteProduct(id)
       fetchProducts()
-    } catch (error) {
-      console.error('Error deleting product:', error)
-      alert('Ошибка при удалении товара')
+    } catch (err: any) {
+      setDeleteError(err?.message || 'Ошибка при удалении товара')
     }
   }
 
@@ -68,13 +69,16 @@ export default function AdminProductsPage() {
       label: 'Фото',
       render: (product) => (
         <div className="w-16 h-16 relative rounded-lg overflow-hidden bg-gray-100">
-          {product.images[0] && (
+          {product.images?.[0] ? (
             <Image
               src={product.images[0]}
               alt={product.name}
               fill
               className="object-cover"
+              unoptimized={!product.images[0].startsWith('https://images.unsplash.com')}
             />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">нет фото</div>
           )}
         </div>
       ),
@@ -156,6 +160,12 @@ export default function AdminProductsPage() {
         </Link>
       </div>
 
+      {deleteError && (
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+          {deleteError}
+        </div>
+      )}
+
       <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6">
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           <Input
@@ -166,7 +176,11 @@ export default function AdminProductsPage() {
 
           <Select
             value={filters.category_id?.toString() || ''}
-            onChange={(e) => handleFilterChange('category_id', parseInt(e.target.value) || undefined as any)}
+            onChange={(e) => {
+              const val = parseInt(e.target.value)
+              if (val) setFilters((prev) => ({ ...prev, category_id: val, page: 1 }))
+              else setFilters((prev) => { const { category_id, ...rest } = prev; return { ...rest, page: 1 } })
+            }}
           >
             <option value="">Все категории</option>
             {categories.map((cat: any) => (
